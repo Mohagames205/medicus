@@ -11,7 +11,6 @@ import pytz
 from arrow import Arrow
 from ics import Calendar, Event
 from dotenv import load_dotenv
-from bubble import get_relations
 
 load_dotenv()
 
@@ -22,8 +21,21 @@ tree = client.tree
 embed_messages = {}
 
 con = sqlite3.connect("bot.db")
+con.row_factory = sqlite3.Row  # https://stackoverflow.com/questions/3300464/how-can-i-get-dict-from-sqlite-query
 cur = con.cursor()
+cur.execute(
+    'CREATE TABLE IF NOT EXISTS subscribed_messages (id INTEGER PRIMARY KEY, channel_id INTEGER, message_id INTEGER, guild_id INTEGER, phase INTEGER)')
 
+
+# tijdelijke hack
+
+tijd = {
+    "jaar": 2023,
+    "maand": 10,
+    "dag": 10,
+    "uur": 8,
+    "minuut": 30
+}
 
 # sync the slash command to your server
 @client.event
@@ -48,24 +60,16 @@ async def motivatie(ctx):
     await ctx.channel.send(file=file_content)
 
 
-@tree.command(name="setschedule")
+@tree.command(name="setschedulechannel")
 async def set_schedule_channel(int: discord.Interaction, fase: int):
     embed = discord.Embed(
         title="Huidig hoorcollege",
         description="Hier zie je informatie over het huidig hoorcollege.",
-        color=discord.Color.blue()  # You can customize the color
+        color=discord.Color.blue()
     )
 
-    # Add fields to the embed
-    embed.add_field(name="Hoorcollege", value="Lorem ipsum")
-    embed.add_field(name="Locatie", value="ABC", inline=False)
-    embed.add_field(name="Duration", value="x", inline=False)
-    embed.add_field(name="Start", value="1", inline=False)
-    embed.add_field(name="Einde", value="", inline=False)
-
     global_embed_msg = await int.channel.send(embed=embed)
-
-    embed_messages[fase] = global_embed_msg
+    await register_message(fase, global_embed_msg)
 
     await int.response.send_message("test")
 
@@ -84,16 +88,15 @@ async def get_event_at(time: Arrow):
 
 
 async def update_embed(embed_message, ongoing_event: Event):
-
     embed = discord.Embed(
         title="Huidig hoorcollege",
-        description="Hier zie je informatie over het huidig hoorcollege.",
-        color=discord.Color.blue()  # You can customize the color
+        color=discord.Color.red()  # You can customize the color
     )
 
     embed.add_field(name="Hoorcollege", value=f"{ongoing_event.name}")
 
-    if ongoing_event != 'Geen hoorcollege':
+    if ongoing_event.name != 'Geen hoorcollege':
+        embed.color = discord.Color.blue()
         embed.add_field(name="Locatie", value=f"{ongoing_event.location}", inline=False)
         embed.add_field(name="Start", value=f"{ongoing_event.begin}", inline=False)
         embed.add_field(name="Einde", value=f"{ongoing_event.end}", inline=False)
@@ -102,18 +105,48 @@ async def update_embed(embed_message, ongoing_event: Event):
 
     await embed_message.edit(embed=embed)
 
-    print("updated embed with ")
 
+@tree.command(name="overridetime")
+async def override_time(interaction: discord.Interaction, jaar: int, maand: int, dag: int, uur: int, minuut: int):
+    tijd["jaar"] = jaar
+    tijd["maand"] = maand
+    tijd["dag"] = dag
+    tijd["uur"] = uur
+    tijd["minuut"] = minuut
 
+    await interaction.response.send_message("Time has been succesfully overriden")
 
 @tasks.loop(seconds=10)
 async def check_ical():
-    for embed_message in embed_messages:
-        brussels_timezone = pytz.timezone('Europe/Brussels')
+    for guild in client.guilds:
 
-        print("going to update...")
-        now = Arrow.fromdatetime(datetime(2023, 10, 7, 8, 30), tzinfo=brussels_timezone)
-        await update_embed(embed_messages[embed_message], await get_event_at(now))
+        for embed_message in await fetch_messages(guild):
+            brussels_timezone = pytz.timezone('Europe/Brussels')
+
+            print("going to update...")
+            now = Arrow.fromdatetime(datetime(tijd["jaar"], tijd["maand"], tijd["dag"], tijd["uur"], tijd["minuut"]), tzinfo=brussels_timezone)
+            await update_embed(embed_message, await get_event_at(now))
+
+
+async def fetch_messages(guild: discord.Guild):
+    cur.execute('SELECT * FROM subscribed_messages WHERE `guild_id` = ?', (guild.id,))
+    results = cur.fetchall()
+
+    # todo: implement phase specific schedule
+    messages = []
+    for result in results:
+        guild = client.get_guild(result["guild_id"])
+        channel = guild.get_channel(result["channel_id"])
+        message = await channel.get_partial_message(result["message_id"]).fetch()
+        messages.append(message)
+
+    return messages
+
+
+async def register_message(phase: int, message: discord.Message):
+    cur.execute('INSERT INTO subscribed_messages (`phase`, `channel_id`, `message_id`, `guild_id`) values (?, ?, ?, ?)',
+                (phase, message.channel.id, message.id, message.guild.id))
+    con.commit()
 
 
 client.run(os.getenv("token"))
