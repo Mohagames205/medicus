@@ -75,9 +75,10 @@ async def get_file_content(url):
     return content.decode('utf-8')
 
 
-@tree.command(name="providecal")
+@tree.command(name="provideics")
 @commands.has_permissions(kick_members=True)
 async def provice_ics(int: discord.Interaction, link: str, phase: int):
+    await int.response.defer()
     await register_calendar(link, phase)
     await int.response.send_message("ICS has been registered succesfully", ephemeral=True)
 
@@ -158,7 +159,10 @@ async def update_embed(embed_message, course_event: CourseEvent):
         embed.add_field(name="Duur", value=f"{formatted_duration}", inline=False)
         embed.add_field(name="Beschrijving", value=f"{ongoing_event.description}", inline=False)
 
-    await embed_message.edit(embed=embed)
+    try:
+        await embed_message.edit(embed=embed)
+    except discord.errors.NotFound:
+        print("Message does not exist...")
 
 
 @tree.command(name="overridetime")
@@ -181,7 +185,6 @@ async def clear_override(interaction: discord.Interaction):
 
 @tasks.loop(seconds=30)
 async def check_ical():
-    print("fetching updates...")
     for guild in client.guilds:
 
         for embed_message in await fetch_messages(guild):
@@ -196,6 +199,7 @@ async def check_ical():
                 now = Arrow.fromdatetime(
                     datetime(tijd["jaar"], tijd["maand"], tijd["dag"], tijd["uur"], tijd["minuut"]),
                     tzinfo=brussels_timezone)
+            print(f"[{now}][Phase {phase}][{guild.id}][{message.channel.id}][{message.id}] Updating embed")
             await update_embed(message, await get_event_at(now, phase))
 
 @client.event
