@@ -11,9 +11,10 @@ import pytz
 from arrow import Arrow
 from ics import Calendar, Event
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
-
+logging.basicConfig(level=logging.INFO)
 
 class CourseEvent:
     NO_EVENT = -1
@@ -61,7 +62,7 @@ async def on_ready():
     check_ical.start()
     game = discord.Game("mootje.be")
     await client.change_presence(status=discord.Status.idle, activity=game)
-    print("ready")
+    logging.info("BOT IS READY")
 
 
 async def get_file_content(url):
@@ -162,7 +163,7 @@ async def update_embed(embed_message, course_event: CourseEvent):
     try:
         await embed_message.edit(embed=embed)
     except discord.errors.NotFound:
-        print("Message does not exist...")
+        logging.warning("Message does not exist...")
 
 
 @tree.command(name="overridetime")
@@ -199,7 +200,7 @@ async def check_ical():
                 now = Arrow.fromdatetime(
                     datetime(tijd["jaar"], tijd["maand"], tijd["dag"], tijd["uur"], tijd["minuut"]),
                     tzinfo=brussels_timezone)
-            print(f"[{now}][Phase {phase}][{guild.id}][{message.channel.id}][{message.id}] Updating embed")
+            logging.info(f"[{now}][Phase {phase}][{guild.id}][{message.channel.id}][{message.id}] Updating embed")
             await update_embed(message, await get_event_at(now, phase))
 
 @client.event
