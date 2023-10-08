@@ -93,10 +93,15 @@ async def set_schedule_channel(int: discord.Interaction, phase: int):
     global_embed_msg = await int.channel.send(embed=embed)
     await register_message(phase, global_embed_msg)
 
-    await int.response.send_message("test")
+    await int.response.send_message("Kanaal ontvangt vanaf nu uurrooster updates", ephemeral=True)
 
 
 async def get_event_at(time: Arrow, phase: int):
+    calendar = await fetch_calendar(phase)
+
+    if calendar is None:
+        return CourseEvent(Event(name=f"Geen ICS geregistreerd voor fase {str(phase)}", description="Gelieve een ICS-link te registeren"), CourseEvent.NO_EVENT)
+
     file = await get_file_content(await fetch_calendar(phase))
     cal = Calendar(file)
 
@@ -122,6 +127,9 @@ async def get_event_at(time: Arrow, phase: int):
 
 
 async def update_embed(embed_message, course_event: CourseEvent):
+    ongoing_event = course_event.event
+    duration_str = str(ongoing_event.duration)
+
     if course_event.status == CourseEvent.CURRENT:
         title = "🎯  |  Huidig hoorcollege"
         color = discord.Color.purple()
@@ -129,25 +137,20 @@ async def update_embed(embed_message, course_event: CourseEvent):
         title = "➡️  |  Toekomstig hoorcollege"
         color = discord.Color.green()
     else:
-        title = "Geen hoorcollege ❌"
+        title = "❌  |  Geen hoorcollege "
         color = discord.Color.red()
-
-    ongoing_event = course_event.event
 
     embed = discord.Embed(
         title=title,
         color=color
     )
 
-    duration_str = str(ongoing_event.duration)
-    hours, minutes, _ = duration_str.split(":")  # Splitting hours, minutes, and seconds
-
-    # Formatting the duration
-    formatted_duration = f"{hours}u{minutes}m"
-
     embed.add_field(name="Hoorcollege", value=f"{ongoing_event.name}")
 
-    if ongoing_event.name != 'Geen hoorcollege':
+    if course_event.status != course_event.NO_EVENT:
+        hours, minutes, _ = duration_str.split(":")
+        formatted_duration = f"{hours}u{minutes}m"
+
         embed.add_field(name="Locatie", value=f"{ongoing_event.location}", inline=False)
         embed.add_field(name="Tijd",
                         value=f"{ongoing_event.begin.format('HH:mm', 'nl')} - {ongoing_event.end.format('HH:mm', 'nl')}  |  {ongoing_event.end.format('D MMMM YYYY', 'nl')}",
@@ -204,14 +207,15 @@ async def register_calendar(link: str, phase: int):
 
 async def fetch_calendar(phase: int):
     cur.execute('SELECT * FROM calendars WHERE `phase` = ?', (phase,))
-    return cur.fetchone()["link"]
+    result = cur.fetchone()
+
+    return result["link"] if result else None
 
 
 async def fetch_messages(guild: discord.Guild):
     cur.execute('SELECT * FROM subscribed_messages WHERE `guild_id` = ?', (guild.id,))
     results = cur.fetchall()
 
-    # todo: implement phase specific schedule
     messages = []
     for result in results:
         guild = client.get_guild(result["guild_id"])
