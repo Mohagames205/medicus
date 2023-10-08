@@ -77,7 +77,7 @@ async def get_file_content(url):
 
 @tree.command(name="provideics")
 @commands.has_permissions(kick_members=True)
-async def provice_ics(int: discord.Interaction, link: str, phase: int):
+async def provide_ics(int: discord.Interaction, link: str, phase: int):
     await int.response.defer()
     await register_calendar(link, phase)
     await int.response.send_message("ICS has been registered succesfully", ephemeral=True)
