@@ -198,12 +198,15 @@ async def check_ical():
                     tzinfo=brussels_timezone)
             await update_embed(message, await get_event_at(now, phase))
 
+@client.event
+async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
+    if await is_subscribed_message(payload.message_id):
+        await unregister_message(payload.message_id)
 
 async def register_calendar(link: str, phase: int):
     cur.execute('INSERT INTO calendars (`link`, `phase`) values (?, ?)',
                 (link, phase))
     con.commit()
-
 
 async def fetch_calendar(phase: int):
     cur.execute('SELECT * FROM calendars WHERE `phase` = ?', (phase,))
@@ -211,6 +214,10 @@ async def fetch_calendar(phase: int):
 
     return result["link"] if result else None
 
+async def is_subscribed_message(message_id: int):
+    result = cur.execute('SELECT count(*) FROM subscribed_messages WHERE `message_id` = ?', (message_id,)).fetchone()
+
+    return result[0] > 0
 
 async def fetch_messages(guild: discord.Guild):
     cur.execute('SELECT * FROM subscribed_messages WHERE `guild_id` = ?', (guild.id,))
@@ -232,5 +239,8 @@ async def register_message(phase: int, message: discord.Message):
                 (phase, message.channel.id, message.id, message.guild.id))
     con.commit()
 
+async def unregister_message(message_id: int):
+    cur.execute('DELETE FROM subscribed_messages WHERE message_id = ?',(message_id,))
+    con.commit()
 
 client.run(os.getenv("token"))
