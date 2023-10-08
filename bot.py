@@ -93,7 +93,7 @@ async def set_schedule_channel(int: discord.Interaction, phase: int):
     global_embed_msg = await int.channel.send(embed=embed)
     await register_message(phase, global_embed_msg)
 
-    await int.response.send_message("Kanaal ontvangt vanaf nu uurrooster updates", ephemeral=True)
+    await int.response.send_message("Dit kanaal ontvangt vanaf nu uurrooster updates", ephemeral=True)
 
 
 async def get_event_at(time: Arrow, phase: int):
