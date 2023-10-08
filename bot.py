@@ -100,7 +100,7 @@ async def get_event_at(time: Arrow, phase: int):
     calendar = await fetch_calendar(phase)
 
     if calendar is None:
-        return CourseEvent(Event(name=f"Geen ICS geregistreerd voor fase {str(phase)}", description="Gelieve een ICS-link te registeren"), CourseEvent.NO_EVENT)
+        return CourseEvent(Event(name=f"Geen ICS geregistreerd voor fase {str(phase)}"), CourseEvent.NO_EVENT)
 
     file = await get_file_content(await fetch_calendar(phase))
     cal = Calendar(file)
