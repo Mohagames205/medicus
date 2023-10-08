@@ -59,6 +59,8 @@ async def on_ready():
         tree.copy_global_to(guild=discord.Object(id=guild.id))
         await tree.sync(guild=discord.Object(id=guild.id))
     check_ical.start()
+    game = discord.Game("mootje.be")
+    await client.change_presence(status=discord.Status.idle, activity=game)
     print("ready")
 
 
@@ -84,6 +86,7 @@ async def provice_ics(int: discord.Interaction, link: str, phase: int):
 async def set_schedule_channel(int: discord.Interaction, phase: int):
     embed = discord.Embed(
         title="Huidig hoorcollege",
+        description="Inladen van ICS data",
         color=discord.Color.pink()
     )
 
