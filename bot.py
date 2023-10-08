@@ -80,7 +80,7 @@ async def get_file_content(url):
 async def provide_ics(int: discord.Interaction, link: str, phase: int):
     await int.response.defer()
     await register_calendar(link, phase)
-    await int.response.send_message("ICS has been registered succesfully", ephemeral=True)
+    await int.followup.send("ICS has been registered succesfully", ephemeral=True)
 
 
 @tree.command(name="setschedulechannel")
