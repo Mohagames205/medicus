@@ -184,7 +184,7 @@ async def check_ical():
 
             brussels_timezone = pytz.timezone('Europe/Brussels')
 
-            now = Arrow.now()
+            now = Arrow.now(tzinfo=brussels_timezone)
 
             if tijd["override"]:
                 now = Arrow.fromdatetime(
