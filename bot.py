@@ -13,6 +13,8 @@ from ics import Calendar, Event
 from dotenv import load_dotenv
 import logging
 
+from verification.verification import VerificationModule
+
 brussels_timezone = pytz.timezone('Europe/Brussels')
 
 
@@ -44,6 +46,7 @@ cur.execute(
 cur.execute(
     'CREATE TABLE IF NOT EXISTS calendars (id INTEGER PRIMARY KEY, link TEXT, phase INTEGER UNIQUE);')
 
+
 # tijdelijke hack
 
 tijd = {
@@ -62,9 +65,15 @@ async def on_ready():
     for guild in client.guilds:
         tree.copy_global_to(guild=discord.Object(id=guild.id))
         await tree.sync(guild=discord.Object(id=guild.id))
+
     check_ical.start()
+
     game = discord.Game("mootje.be")
     await client.change_presence(status=discord.Status.idle, activity=game)
+
+    await client.add_cog(VerificationModule(client, cur))
+    await client.tree.sync()
+
     logging.info("BOT IS READY")
 
 
@@ -228,7 +237,13 @@ async def fetch_messages(guild: discord.Guild):
     for result in results:
         guild = client.get_guild(result["guild_id"])
         channel = guild.get_channel(result["channel_id"])
-        message = await channel.get_partial_message(result["message_id"]).fetch()
+
+        try:
+            message = await channel.get_partial_message(result["message_id"]).fetch()
+        except discord.errors.NotFound:
+            logging.warning(f"Unregistering non existent message with ID: {result['message_id']}")
+            await unregister_message(result["message_id"])
+            continue
 
         messages.append({"message": message, "phase": result["phase"]})
 
