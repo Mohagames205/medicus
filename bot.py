@@ -115,9 +115,6 @@ async def get_event_at(time: Arrow, phase: int):
         event_begin = Arrow.fromdatetime(event.begin, tzinfo=brussels_timezone)
         event_end = Arrow.fromdatetime(event.end, tzinfo=brussels_timezone)
 
-        logging.info("CURRENT TIME", time)
-        logging.info("EVENT_BEGIN", event_begin)
-
         if event_begin <= time <= event_end:
             return CourseEvent(event, CourseEvent.CURRENT)
 
