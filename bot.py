@@ -77,12 +77,11 @@ async def get_file_content(url):
 
 
 @tree.command(name="provideics")
-@commands.has_permissions(kick_members=True)
+@commands.has_permissions(administrator=True)
 async def provide_ics(int: discord.Interaction, link: str, phase: int):
     await int.response.defer()
     await register_calendar(link, phase)
     await int.followup.send("ICS has been registered succesfully", ephemeral=True)
-
 
 @tree.command(name="setschedulechannel")
 async def set_schedule_channel(int: discord.Interaction, phase: int):
@@ -109,23 +108,14 @@ async def get_event_at(time: Arrow, phase: int):
 
     events = sorted(cal.events, key=lambda ev: ev.begin)
 
-    ongoing_event = None
-    next_event = None
-
     for event in events:
         if event.begin <= time <= event.end:
-            ongoing_event = event
+            return CourseEvent(event, CourseEvent.CURRENT)
 
         elif event.begin > time:
-            next_event = event
-            break
+            return CourseEvent(event, CourseEvent.UPCOMING)
 
-    if ongoing_event:
-        return CourseEvent(ongoing_event, CourseEvent.CURRENT)
-    elif next_event:
-        return CourseEvent(next_event, CourseEvent.UPCOMING)
-    else:
-        return CourseEvent(Event("Geen hoorcollege"), CourseEvent.NO_EVENT)
+    return CourseEvent(Event("Geen hoorcollege"), CourseEvent.NO_EVENT)
 
 
 async def update_embed(embed_message, course_event: CourseEvent):
@@ -201,7 +191,9 @@ async def check_ical():
                     datetime(tijd["jaar"], tijd["maand"], tijd["dag"], tijd["uur"], tijd["minuut"]),
                     tzinfo=brussels_timezone)
             logging.info(f"[{now}][Phase {phase}][{guild.id}][{message.channel.id}][{message.id}] Updating embed")
-            await update_embed(message, await get_event_at(now, phase))
+
+            event_now = await get_event_at(now, phase)
+            await update_embed(message, event_now)
 
 @client.event
 async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
