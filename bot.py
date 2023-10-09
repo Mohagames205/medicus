@@ -13,6 +13,9 @@ from ics import Calendar, Event
 from dotenv import load_dotenv
 import logging
 
+brussels_timezone = pytz.timezone('Europe/Brussels')
+
+
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
@@ -109,10 +112,12 @@ async def get_event_at(time: Arrow, phase: int):
     events = sorted(cal.events, key=lambda ev: ev.begin)
 
     for event in events:
-        if event.begin <= time <= event.end:
+        event_begin = Arrow.fromdatetime(event.begin, tzinfo=brussels_timezone)
+        event_end = Arrow.fromdatetime(event.end, tzinfo=brussels_timezone)
+        if event_begin <= time <= event.end:
             return CourseEvent(event, CourseEvent.CURRENT)
 
-        elif event.begin > time:
+        elif event_end > time:
             return CourseEvent(event, CourseEvent.UPCOMING)
 
     return CourseEvent(Event("Geen hoorcollege"), CourseEvent.NO_EVENT)
@@ -181,8 +186,6 @@ async def check_ical():
         for embed_message in await fetch_messages(guild):
             message = embed_message["message"]
             phase = embed_message["phase"]
-
-            brussels_timezone = pytz.timezone('Europe/Brussels')
 
             now = Arrow.now(tzinfo=brussels_timezone)
 
