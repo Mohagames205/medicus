@@ -107,19 +107,23 @@ async def get_event_at(time: Arrow, phase: int):
         return CourseEvent(Event(name=f"Geen ICS geregistreerd voor fase {str(phase)}"), CourseEvent.NO_EVENT)
 
     file = await get_file_content(await fetch_calendar(phase))
-    cal = Calendar(file)
 
-    events = sorted(cal.events, key=lambda ev: ev.begin)
+    try:
+        cal = Calendar(file)
 
-    for event in events:
-        event_begin = Arrow.fromdatetime(event.begin, tzinfo=brussels_timezone)
-        event_end = Arrow.fromdatetime(event.end, tzinfo=brussels_timezone)
+        events = sorted(cal.events, key=lambda ev: ev.begin)
 
-        if event_begin <= time <= event_end:
-            return CourseEvent(event, CourseEvent.CURRENT)
+        for event in events:
+            event_begin = Arrow.fromdatetime(event.begin, tzinfo=brussels_timezone)
+            event_end = Arrow.fromdatetime(event.end, tzinfo=brussels_timezone)
 
-        elif event_end > time:
-            return CourseEvent(event, CourseEvent.UPCOMING)
+            if event_begin <= time <= event_end:
+                return CourseEvent(event, CourseEvent.CURRENT)
+
+            elif event_end > time:
+                return CourseEvent(event, CourseEvent.UPCOMING)
+    except:
+        logging.warning("Something went wrong while parsing the calendar... trying again.")
 
     return CourseEvent(Event("Geen hoorcollege"), CourseEvent.NO_EVENT)
 
