@@ -46,6 +46,15 @@ cur.execute(
 cur.execute(
     'CREATE TABLE IF NOT EXISTS calendars (id INTEGER PRIMARY KEY, link TEXT, phase INTEGER UNIQUE);')
 
+cur.execute(
+    'CREATE TABLE IF NOT EXISTS verification_codes (id INTEGER PRIMARY KEY, code INTEGER, email VARCHAR(255) UNIQUE)'
+)
+
+cur.execute(
+    'CREATE TABLE IF NOT EXISTS verified_users (id INTEGER PRIMARY KEY, user_id INTEGER UNIQUE)'
+)
+
+
 
 # tijdelijke hack
 
@@ -62,6 +71,8 @@ tijd = {
 # sync the slash command to your server
 @client.event
 async def on_ready():
+    await client.add_cog(VerificationModule(client, con))
+
     for guild in client.guilds:
         tree.copy_global_to(guild=discord.Object(id=guild.id))
         await tree.sync(guild=discord.Object(id=guild.id))
@@ -70,9 +81,6 @@ async def on_ready():
 
     game = discord.Game("mootje.be")
     await client.change_presence(status=discord.Status.idle, activity=game)
-
-    await client.add_cog(VerificationModule(client, cur))
-    await client.tree.sync()
 
     logging.info("BOT IS READY")
 
