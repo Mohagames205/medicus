@@ -183,7 +183,7 @@ async def clear_override(interaction: discord.Interaction):
     tijd["override"] = False
     await interaction.response.send_message("Time has been succesfully reset")
 
-@tree.command(name="anonymous", description="Stel je vraag ananoniem")
+@tree.command(name="anonymous", description="Stel je vraag anoniem")
 async def ask_anonymous(interaction: discord.Interaction, question: str):
 
     await interaction.response.defer(ephemeral=True)
