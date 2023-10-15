@@ -200,6 +200,21 @@ async def clear_override(interaction: discord.Interaction):
     tijd["override"] = False
     await interaction.response.send_message("Time has been succesfully reset")
 
+@tree.command(name="anonymous", description="Stel je vraag anoniem")
+async def ask_anonymous(interaction: discord.Interaction, question: str):
+
+    await interaction.response.defer(ephemeral=True)
+
+    embed = discord.Embed(
+        title="Anonieme vraag",
+        description=f"{question}",
+        colour=discord.Color.purple()
+    )
+
+    logging.info(f"{interaction.user.id} asked following question: {question}")
+    await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal", ephemeral=True)
+    await interaction.channel.send(embed=embed)
+
 
 @tasks.loop(seconds=30)
 async def check_ical():
