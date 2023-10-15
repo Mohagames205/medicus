@@ -212,7 +212,7 @@ async def ask_anonymous(interaction: discord.Interaction, question: str):
     )
 
     logging.info(f"{interaction.user.id} asked following question: {question}")
-    await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal", ephemeral=True)
+    await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal")
     await interaction.channel.send(embed=embed)
 
 
