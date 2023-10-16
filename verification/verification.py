@@ -106,6 +106,14 @@ class VerificationModule(commands.Cog):
 
         return result[0] > 0
 
+    @app_commands.command(name="testbutton")
+    async def test_button(self, int: discord.Interaction):
+
+        view = discord.ui.View()
+        view.add_item(verificationmodal.VerificationButton("Vraag code aan", verificationmodal.CollectNameModal(self)))
+
+        await int.response.send_message(view=view)
+
     @commands.Cog.listener('on_member_join')
     async def on_verified_member_join(self, member: discord.Member):
         if member.get_role(int(os.getenv('VERIFIED_ROLE_ID'))) is None and await self.is_verified(member.id):
