@@ -41,7 +41,8 @@ con = sqlite3.connect("bot.db")
 con.row_factory = sqlite3.Row  # https://stackoverflow.com/questions/3300464/how-can-i-get-dict-from-sqlite-query
 cur = con.cursor()
 cur.execute(
-    'CREATE TABLE IF NOT EXISTS subscribed_messages (id INTEGER PRIMARY KEY, channel_id INTEGER, message_id INTEGER, guild_id INTEGER, phase INTEGER);')
+    'CREATE TABLE IF NOT EXISTS subscribed_messages (id INTEGER PRIMARY KEY, channel_id INTEGER, message_id INTEGER, '
+    'guild_id INTEGER, phase INTEGER);')
 
 cur.execute(
     'CREATE TABLE IF NOT EXISTS calendars (id INTEGER PRIMARY KEY, link TEXT, phase INTEGER UNIQUE);')
@@ -54,6 +55,10 @@ cur.execute(
     'CREATE TABLE IF NOT EXISTS verified_users (id INTEGER PRIMARY KEY, user_id INTEGER UNIQUE)'
 )
 
+cur.execute(
+    'CREATE TABLE IF NOT EXISTS synced_verification_messages (id INTEGER PRIMARY KEY, guild_id INTEGER, channel_id '
+    'INTEGER, message_id INTEGER)'
+)
 
 
 # tijdelijke hack
@@ -81,6 +86,8 @@ async def on_ready():
 
     game = discord.Game("mootje.be")
     await client.change_presence(status=discord.Status.idle, activity=game)
+
+    await client.get_cog("verification").refresh_messages()
 
     logging.info("BOT IS READY")
 
