@@ -110,7 +110,7 @@ class VerificationModule(commands.Cog):
 
     async def get_student(self, voornaam, achternaam):
         for student in await self.get_students():
-            if voornaam.lower() == student.surname.lower() and achternaam.lower() == student.familyname.lower():
+            if voornaam.lower() == student.name.lower() and achternaam.lower() == student.surname.lower():
                 return student
         return None
 
@@ -135,7 +135,7 @@ class VerificationModule(commands.Cog):
 
     async def is_student(self, voornaam, achternaam):
         return any(
-            voornaam.lower() == student.surname.lower() and achternaam.lower() == student.familyname.lower() for student
+            voornaam.lower() == student.name.lower() and achternaam.lower() == student.surname.lower() for student
             in await self.get_students())
 
     def create_verification_code(self, email):
@@ -148,7 +148,7 @@ class VerificationModule(commands.Cog):
         role = member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID')))
 
         try:
-            await member.edit(nick=student.surname)
+            await member.edit(nick=student.name)
         except Exception as er:
             print(er)
 
