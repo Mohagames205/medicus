@@ -11,6 +11,18 @@ class VerificationButton(ui.Button):
         self.verification_module = verification_module
 
     async def callback(self, interaction: discord.Interaction):
+
+        if await self.verification_module.is_verified(interaction.user.id):
+            embed = discord.Embed(
+                colour=discord.Color.red(),
+                title="Reeds geverifieerd",
+                description="Volgens onze gegevens ben je al geverifieerd in deze Discord-server. Dit incident is "
+                            "gemeld."
+            )
+
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
         await interaction.response.send_modal(self.modal(self.verification_module))
 
 
@@ -21,6 +33,17 @@ class InputCodeButton(ui.Button):
         self.verification_module = verification_module
 
     async def callback(self, interaction: discord.Interaction):
+        if await self.verification_module.is_verified(interaction.user.id):
+            embed = discord.Embed(
+                colour=discord.Color.red(),
+                title="Reeds geverifieerd",
+                description="Volgens onze gegevens ben je al geverifieerd in deze Discord-server. Dit incident is "
+                            "gemeld."
+            )
+
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
         await interaction.response.send_modal(VerificationModal(self.student, self.verification_module))
 
 
@@ -84,9 +107,12 @@ class VerificationModal(ui.Modal, title='Verificatiecode studentenmail'):
             )
 
             await interaction.user.send(embed=embed)
-            await interaction.followup.send(f"Dank je wel! Je bent succesvol geverifieerd :)", ephemeral=True)
+            await interaction.followup.send(
+                f"Dank je wel {interaction.user.mention}! Je bent succesvol geverifieerd :). Ga naar <#1157399496372797480> om te chatten.",
+                ephemeral=True)
         else:
             view = ui.View()
             view.add_item(InputCodeButton(self.student, self.verification_module))
 
-            await interaction.followup.send(f"De code die je hebt opgegeven is incorrect. Probeer het opnieuw:", ephemeral=True, view=view)
+            await interaction.followup.send(f"De code die je hebt opgegeven is incorrect. Probeer het opnieuw:",
+                                            ephemeral=True, view=view)
