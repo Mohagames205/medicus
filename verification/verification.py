@@ -16,14 +16,12 @@ from sendgrid.helpers.mail import Mail
 class VerificationModule(commands.Cog):
 
     def __init__(self, bot, con: sqlite3.Connection):
-
         self.replaceable_roles = self.fetch_replaceable_roles()
         self.__cog_name__ = "verification"
         self.bot = bot
         self.tree = bot.tree
         self.cur = con.cursor()
         self.con = con
-
 
     def fetch_replaceable_roles(self):
         with open("assets/role_verification.json") as file:
@@ -155,33 +153,47 @@ class VerificationModule(commands.Cog):
         self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`) values(?)', (member.id,))
         self.con.commit()
 
-    async def replace_verification_roles(self, member: discord.Member):
-        roles = member.roles
-
-        for role in roles:
-            if str(role.id) in list(self.replaceable_roles.keys()):
-                role = member.guild.get_role(self.replaceable_roles[str(role.id)])
-                if member.get_role(role.id) is None:
-                    await member.add_roles(role)
-                else:
-                    await member.remove_roles(role)
-
-                #await member.remove_roles(role)
-                # don't remove the role, so when the user decides to change the role after onboarding, the bot can detect that and change the role for the user
-
     async def is_verified(self, user_id: int):
         self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `user_id` = ?', (user_id,))
         result = self.cur.fetchone()
 
         return result[0] > 0
 
-
     @commands.Cog.listener('on_member_join')
     async def on_verified_member_join(self, member: discord.Member):
         if not await self.is_verified(member.id):
             await member.add_roles(member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))))
 
+    async def replace_verification_roles(self, member: discord.Member):
+        roles = member.roles
+
+        for role in roles:
+            if str(role.id) in list(self.replaceable_roles.keys()):
+                real_role = member.guild.get_role(self.replaceable_roles[str(role.id)])
+                if member.get_role(real_role.id) is None:
+                    await member.add_roles(real_role)
+
+                # await member.remove_roles(role)
+                # don't remove the role, so when the user decides to change the role after onboarding, the bot can detect that and change the role for the user
+
+    def get_sync_roles(self, roles_1, roles_2, member: discord.Member):
+        role_diff = set(roles_2) - set(roles_1)
+        subscribed_roles = [member.guild.get_role(self.replaceable_roles[str(role.id)]) for role in role_diff if
+                            str(role.id) in list(self.replaceable_roles.keys())]
+        subscribed_roles = [role for role in subscribed_roles if role is not None]
+
+        return subscribed_roles
+
     @commands.Cog.listener('on_member_update')
     async def on_role_update(self, before: discord.Member, after: discord.Member):
         if await self.is_verified(after.id):
-            await self.replace_verification_roles(after)
+
+            if len(before.roles) < len(after.roles):
+                roles = [role for role in self.get_sync_roles(before.roles, after.roles, after) if
+                         after.get_role(role.id) is None]
+                await after.add_roles(*roles)
+
+            if len(before.roles) > len(after.roles):
+                roles = [role for role in self.get_sync_roles(after.roles, before.roles, after) if
+                         after.get_role(role.id)]
+                await after.remove_roles(*roles)
