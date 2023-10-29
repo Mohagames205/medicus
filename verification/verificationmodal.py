@@ -25,6 +25,8 @@ class VerificationButton(ui.Button):
 
         await interaction.response.send_modal(self.modal(self.verification_module))
 
+        await self.verification_module.refresh_messages()
+
 
 class InputCodeButton(ui.Button):
     def __init__(self, student, verification_module):
