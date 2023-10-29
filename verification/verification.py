@@ -49,7 +49,7 @@ class VerificationModule(commands.Cog):
                 await message.edit(view=view)
             except discord.errors.NotFound:
                 print(f"Unregistering non existent message with ID: {message['message_id']}")
-                # await unregister_message(result["message_id"])
+                await self.unregister_verification_channel(message["message_id"])
                 continue
 
     @app_commands.command(name="setverificationchannel")
@@ -77,6 +77,11 @@ class VerificationModule(commands.Cog):
             (global_embed_msg.guild.id, global_embed_msg.channel.id, global_embed_msg.id))
         self.con.commit()
         await interaction.followup.send("OK")
+
+    async def unregister_verification_channel(self, message_id: int):
+        self.cur.execute(
+            "DELETE FROM synced_verification_messages WHERE message_id = ?",(message_id,))
+        self.con.commit()
 
     @app_commands.command(name="testverify")
     async def test_verification(self, int: discord.Interaction, voornaam: str, achternaam: str):
