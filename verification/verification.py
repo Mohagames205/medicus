@@ -99,7 +99,7 @@ class VerificationModule(commands.Cog):
 
     async def unregister_verification_channel(self, message_id: int):
         self.cur.execute(
-            "DELETE FROM synced_verification_messages WHERE message_id = ?",(message_id,))
+            "DELETE FROM synced_verification_messages WHERE message_id = ?", (message_id,))
         self.con.commit()
 
     async def get_students(self):
@@ -156,6 +156,24 @@ class VerificationModule(commands.Cog):
 
         return code
 
+    @app_commands.command()
+    async def force_verify_user(self, int: discord.Interaction, user: discord.Member, name: str, surname: str):
+
+        student = await self.get_student(name, surname)
+
+        if student:
+            await self.verify_user(user, student)
+
+            embed = discord.Embed(
+                title="Succesvol geverifieerd",
+                description="Je bent succesvol geverifieerd als student **Bachelor Geneeskunde** aan de **KU Leuven.**",
+                color=discord.Color.from_rgb(82, 189, 236)
+            )
+
+            await user.send(embed=embed)
+
+            await int.response.send_message(f"{user.mention} is succesvol geverifieerd!")
+
     async def verify_user(self, member: discord.Member, student: verificationuser.VerificationUser):
         role = member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID')))
 
@@ -169,16 +187,15 @@ class VerificationModule(commands.Cog):
 
         await self.verification_logger.user_verified(member, student)
 
-        self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`, `email`) values(?, ?)', (member.id, student.email))
+        self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`, `email`) values(?, ?)',
+                         (member.id, student.email))
         self.con.commit()
-
 
     async def is_email_verified(self, email: str):
         self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `email` = ?', (email,))
         result = self.cur.fetchone()
 
         return result[0] > 0
-
 
     async def is_verified(self, user_id: int):
         self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `user_id` = ?', (user_id,))
