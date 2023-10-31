@@ -156,6 +156,8 @@ class VerificationModule(commands.Cog):
 
         return code
 
+
+    # TODO: force verify should use the student e-mail, at this moment that isn't possible because get_student only accepts a name and surname.
     @app_commands.command()
     async def force_verify_user(self, int: discord.Interaction, user: discord.Member, name: str, surname: str):
 
