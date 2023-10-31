@@ -6,8 +6,10 @@ from discord.ext import commands
 import discord
 from discord import app_commands, ui
 import json
+
 from verification import verificationuser
 from verification import verificationmodal
+from verification.verification_logger import VerificationLogger
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -15,13 +17,19 @@ from sendgrid.helpers.mail import Mail
 
 class VerificationModule(commands.Cog):
 
-    def __init__(self, bot, con: sqlite3.Connection):
+    def __init__(self, bot: discord.ext.commands.Bot, con: sqlite3.Connection):
         self.replaceable_roles = self.fetch_replaceable_roles()
         self.__cog_name__ = "verification"
         self.bot = bot
         self.tree = bot.tree
         self.cur = con.cursor()
         self.con = con
+    
+        channel = bot.get_channel(int(os.getenv("REPORTS_CHANNEL")))
+        self.verification_logger = VerificationLogger(channel)
+
+    async def cog_load(self) -> None:
+        await self.verification_logger.enable()
 
     def fetch_replaceable_roles(self):
         with open("assets/role_verification.json") as file:
@@ -42,7 +50,9 @@ class VerificationModule(commands.Cog):
 
             try:
                 message = await channel.get_partial_message(message["message_id"]).fetch()
-                view = discord.ui.View()
+                view = discord.ui.View(
+                    timeout=None
+                )
                 view.add_item(
                     verificationmodal.VerificationButton("Vraag code aan", verificationmodal.CollectNameModal,
                                                          self))
@@ -66,7 +76,9 @@ class VerificationModule(commands.Cog):
             color=discord.Color.blue()
         )
 
-        view = discord.ui.View()
+        view = discord.ui.View(
+            timeout=None
+        )
         view.add_item(
             verificationmodal.VerificationButton("Vraag code aan", verificationmodal.CollectNameModal, self))
 
@@ -82,18 +94,6 @@ class VerificationModule(commands.Cog):
         self.cur.execute(
             "DELETE FROM synced_verification_messages WHERE message_id = ?",(message_id,))
         self.con.commit()
-
-    @app_commands.command(name="testverify")
-    async def test_verification(self, int: discord.Interaction, voornaam: str, achternaam: str):
-
-        student = await self.get_student(voornaam, achternaam)
-        if student is not None:
-            await int.response.send_modal(verificationmodal.VerificationModal(student, self))
-            # await (int.followup.original_response()).send_modal(Questionnaire())
-            # await int.followup.send("Je bent inderdaad student! Check je mailbox om je identiteit te verifieren")
-            # await self.send_mail((await self.get_student(voornaam, achternaam)).email)
-        else:
-            await int.response.send_message("Je bent geen student geneeskunde!")
 
     async def get_students(self):
         with open("assets/memberships.json") as file:
@@ -115,7 +115,6 @@ class VerificationModule(commands.Cog):
         return None
 
     def send_mail(self, email, code):
-
         with open('assets/email.html') as file:
             html = file.read()
 
@@ -138,10 +137,16 @@ class VerificationModule(commands.Cog):
             voornaam.lower() == student.name.lower() and achternaam.lower() == student.surname.lower() for student
             in await self.get_students())
 
-    def create_verification_code(self, email):
+    async def create_verification_code(self, student: verificationuser.VerificationUser):
+
+        email = student.email
+
         code = random.randint(10000, 99999)
         self.cur.execute('INSERT OR REPLACE into verification_codes (`code`, `email`) values (?, ?)', (code, email))
         self.con.commit()
+
+        await self.verification_logger.on_code_creation(code, student)
+
         return code
 
     async def verify_user(self, member: discord.Member, student: verificationuser.VerificationUser):
@@ -154,6 +159,8 @@ class VerificationModule(commands.Cog):
 
         await member.remove_roles(role)
         await self.replace_verification_roles(member)
+
+        await self.verification_logger.user_verified(member, student)
 
         self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`) values(?)', (member.id,))
         self.con.commit()
@@ -168,6 +175,9 @@ class VerificationModule(commands.Cog):
     async def on_verified_member_join(self, member: discord.Member):
         if not await self.is_verified(member.id):
             await member.add_roles(member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))))
+            return
+
+        await self.verification_logger.on_verified_user_join(member)
 
     async def replace_verification_roles(self, member: discord.Member):
         roles = member.roles
