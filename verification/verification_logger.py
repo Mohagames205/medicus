@@ -73,7 +73,8 @@ class VerificationLogger:
 
     async def on_verified_user_join(self, member: discord.Member):
         await self.broadcast_info(title="Geverifieerde student gejoined",
-                                  msg=f"{member.mention} was al eerder geverifieerd en heeft automatisch toegang gekregen.")
+                                  msg=f"{member.mention} was al eerder geverifieerd en heeft automatisch toegang "
+                                      f"gekregen.")
 
     async def broadcast_warning(self, msg: str, fields=None, title: str = "❗ Waarschuwing"):
         if fields is None:
@@ -89,7 +90,8 @@ class VerificationLogger:
 
     async def already_id_verified(self, member: discord.Member):
         await self.broadcast_warning(title="Dubbele verificatie",
-                                     msg=f"{member.mention} is al geverifieerd, maar probeert zich nogmaals te verifiëren. Mogelijks is hier iets misgelopen?")
+                                     msg=f"{member.mention} is al geverifieerd, maar probeert zich nogmaals te "
+                                         f"verifiëren. Mogelijks is hier iets misgelopen?")
 
     async def already_email_verified(self, member: discord.Member, student: verificationuser.VerificationUser, id: int):
 
@@ -100,6 +102,6 @@ class VerificationLogger:
         ]
 
         await self.broadcast_warning(title="Poging tot verificatie ALT",
-                                     msg=f"{member.mention} probeert een ander account te verifieren, maar is al "
+                                     msg=f"{member.mention} probeert een ander account te verifiëren, maar is al "
                                          f"geverifieerd.",
                                      fields=fields)
