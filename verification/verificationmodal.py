@@ -21,6 +21,8 @@ class VerificationButton(ui.Button):
             )
 
             await interaction.response.send_message(embed=embed, ephemeral=True)
+
+            await self.verification_module.verification_logger.already_verified(interaction.user)
             return
 
         await interaction.response.send_modal(self.modal(self.verification_module))
@@ -62,11 +64,14 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
         student = await self.verification_module.get_student(self.firstname.value, self.familyname.value)
         if student is not None:
 
-            code = self.verification_module.create_verification_code(student.email)
+            code = await self.verification_module.create_verification_code(student)
+
             print(code)
             self.verification_module.send_mail(student.email, code)
 
-            view = ui.View()
+            view = ui.View(
+                timeout=None
+            )
             view.add_item(InputCodeButton(student, self.verification_module))
             await interaction.response.send_message(
                 "Gelieve je studentenmail te checken voor een verificatiecode. Druk vervolgens op de onderstaande knop.",
@@ -113,7 +118,9 @@ class VerificationModal(ui.Modal, title='Verificatiecode studentenmail'):
                 f"Dank je wel {interaction.user.mention}! Je bent succesvol geverifieerd :). Ga naar <#1157399496372797480> om te chatten.",
                 ephemeral=True)
         else:
-            view = ui.View()
+            view = ui.View(
+                timeout=None
+            )
             view.add_item(InputCodeButton(self.student, self.verification_module))
 
             await interaction.followup.send(f"De code die je hebt opgegeven is incorrect. Probeer het opnieuw:",

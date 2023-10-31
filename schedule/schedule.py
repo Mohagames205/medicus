@@ -24,7 +24,7 @@ class CourseEvent:
 
 class ScheduleModule(commands.Cog):
 
-    blacklist = json.load(open('../assets/schedule_filter.json'))["filter"]
+    blacklist = json.load(open('assets/schedule_filter.json'))["filter"]
 
     def __init__(self, bot, con: sqlite3.Connection):
         self.__cog_name__ = "scheduling"
