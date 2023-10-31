@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from discord import app_commands, ui
 import aiohttp
@@ -22,6 +23,8 @@ class CourseEvent:
 
 
 class ScheduleModule(commands.Cog):
+
+    blacklist = json.load(open('../assets/schedule_filter.json'))["filter"]
 
     def __init__(self, bot, con: sqlite3.Connection):
         self.__cog_name__ = "scheduling"
@@ -75,6 +78,11 @@ class ScheduleModule(commands.Cog):
             events = sorted(cal.events, key=lambda ev: ev.begin)
 
             for event in events:
+
+                if event.name in self.blacklist:
+                    continue
+
+
                 event_begin = Arrow.fromdatetime(event.begin, tzinfo=brussels_timezone)
                 event_end = Arrow.fromdatetime(event.end, tzinfo=brussels_timezone)
 
