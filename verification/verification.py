@@ -24,7 +24,7 @@ class VerificationModule(commands.Cog):
         self.tree = bot.tree
         self.cur = con.cursor()
         self.con = con
-    
+
         channel = bot.get_channel(int(os.getenv("REPORTS_CHANNEL")))
         self.verification_logger = VerificationLogger(channel)
 
@@ -61,6 +61,13 @@ class VerificationModule(commands.Cog):
                 print(f"Unregistering non existent message with ID: {message['message_id']}")
                 await self.unregister_verification_channel(message["message_id"])
                 continue
+
+    # Tijdelijke hack, in de toekomst integreren we dit in een "VerifiedUser" class
+    async def get_uid_by_email(self, email: str):
+        self.cur.execute('SELECT user_id FROM verified_users WHERE `email` = ?', (email,))
+        result = self.cur.fetchone()
+
+        return result[0]
 
     @app_commands.command(name="setverificationchannel")
     async def set_verification_channel(self, interaction: discord.Interaction):
@@ -162,8 +169,16 @@ class VerificationModule(commands.Cog):
 
         await self.verification_logger.user_verified(member, student)
 
-        self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`) values(?)', (member.id,))
+        self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`, `email`) values(?, ?)', (member.id, student.email))
         self.con.commit()
+
+
+    async def is_email_verified(self, email: str):
+        self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `email` = ?', (email,))
+        result = self.cur.fetchone()
+
+        return result[0] > 0
+
 
     async def is_verified(self, user_id: int):
         self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `user_id` = ?', (user_id,))

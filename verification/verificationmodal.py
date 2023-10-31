@@ -22,7 +22,7 @@ class VerificationButton(ui.Button):
 
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
-            await self.verification_module.verification_logger.already_verified(interaction.user)
+            await self.verification_module.verification_logger.already_id_verified(interaction.user)
             return
 
         await interaction.response.send_modal(self.modal(self.verification_module))
@@ -63,6 +63,20 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
 
         student = await self.verification_module.get_student(self.firstname.value, self.familyname.value)
         if student is not None:
+
+            if await self.verification_module.is_email_verified(student.email):
+                await self.verification_module.verification_logger.already_email_verified(interaction.user, student, await self.verification_module.get_uid_by_email(student.email))
+
+                embed = discord.Embed(
+                    title="Verificatie mislukt",
+                    description="Je hebt reeds een account in deze server dat gekoppeld is aan de gegeven gegevens. We kunnen dit account dus niet verifiëren. Stuur een bericht in <#1167092094746239026> voor hulp.",
+                    color=discord.Color.red()
+                )
+
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+
+                return
+
 
             code = await self.verification_module.create_verification_code(student)
 

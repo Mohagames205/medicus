@@ -43,7 +43,7 @@ cur.execute(
 )
 
 cur.execute(
-    'CREATE TABLE IF NOT EXISTS verified_users (id INTEGER PRIMARY KEY, user_id INTEGER UNIQUE)'
+    'CREATE TABLE IF NOT EXISTS verified_users (id INTEGER PRIMARY KEY, user_id INTEGER UNIQUE, email VARCHAR(255) UNIQUE)'
 )
 
 cur.execute(
