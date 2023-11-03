@@ -131,7 +131,7 @@ class VerificationModule(commands.Cog):
             subject='Verificatie GNK Discord',
             html_content=html.replace("{{CODE}}", str(code)))
         try:
-            sg = SendGridAPIClient(os.getenv("sendgrid_api"))
+            sg = SendGridAPIClient(os.getenv("SENDGRID_API"))
             response = sg.send(message)
             print(response.status_code)
             print(response.body)
