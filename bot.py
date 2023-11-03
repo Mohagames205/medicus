@@ -1,19 +1,12 @@
-import asyncio
-from datetime import datetime
-import io
-
-import aiohttp
-import discord
-from discord.ext import tasks, commands
+import logging
 import os
 import sqlite3
-import pytz
-from arrow import Arrow
-from ics import Calendar, Event
-from dotenv import load_dotenv
-import logging
 
 import aiosqlite
+import discord
+import pytz
+from discord.ext import commands
+from dotenv import load_dotenv
 
 from schedule.schedule import ScheduleModule
 from verification.verification import VerificationModule
@@ -32,7 +25,7 @@ embed_messages = {}
 
 @client.event
 async def on_ready():
-    await initialise_db()
+    con = await initialise_db()
 
     await client.add_cog(VerificationModule(client, con))
     await client.add_cog(ScheduleModule(client, con))
@@ -50,28 +43,30 @@ async def on_ready():
 
 
 async def initialise_db():
-    con = sqlite3.connect("bot.db")
+    con = await aiosqlite.connect("bot.db")
     con.row_factory = sqlite3.Row  # https://stackoverflow.com/questions/3300464/how-can-i-get-dict-from-sqlite-query
-    cur = con.cursor()
-    cur.execute(
+    cur = await con.cursor()
+    await cur.execute(
         'CREATE TABLE IF NOT EXISTS subscribed_messages (id INTEGER PRIMARY KEY, channel_id INTEGER, message_id INTEGER, '
         'guild_id INTEGER, phase INTEGER);')
 
-    cur.execute(
+    await cur.execute(
         'CREATE TABLE IF NOT EXISTS calendars (id INTEGER PRIMARY KEY, link TEXT, phase INTEGER UNIQUE);')
 
-    cur.execute(
+    await cur.execute(
         'CREATE TABLE IF NOT EXISTS verification_codes (id INTEGER PRIMARY KEY, code INTEGER, email VARCHAR(255) UNIQUE)'
     )
 
-    cur.execute(
+    await cur.execute(
         'CREATE TABLE IF NOT EXISTS verified_users (id INTEGER PRIMARY KEY, user_id INTEGER UNIQUE, email VARCHAR(255) UNIQUE)'
     )
 
-    cur.execute(
+    await cur.execute(
         'CREATE TABLE IF NOT EXISTS synced_verification_messages (id INTEGER PRIMARY KEY, guild_id INTEGER, channel_id '
         'INTEGER, message_id INTEGER)'
     )
+
+    return con
 
 
 client.run(os.getenv("token"))

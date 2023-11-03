@@ -82,9 +82,9 @@ class VerificationModal(ui.Modal, title='Verificatiecode studentenmail'):
         self.student = student
 
     async def on_submit(self, interaction: discord.Interaction):
-        self.verification_module.cur.execute("SELECT code FROM verification_codes WHERE email = ?",
+        await self.verification_module.cur.execute("SELECT code FROM verification_codes WHERE email = ?",
                                              (self.student.email,))
-        result = self.verification_module.cur.fetchone()
+        result = await self.verification_module.cur.fetchone()
 
         inputted_code = int(self.code.value)
         sent_code = int(result["code"])

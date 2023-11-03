@@ -1,34 +1,35 @@
-import asyncio
-import random
-import sqlite3
-
-from discord.ext import commands
-import discord
-from discord import app_commands, ui
 import json
-
-from verification import verificationuser
-from verification import verificationmodal
-from verification.verification_logger import VerificationLogger
 import os
+import random
+
+import aiosqlite
+import discord
+from discord import app_commands
+from discord.ext import commands
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+
+from verification import verificationmodal
+from verification import verificationuser
+from verification.verification_logger import VerificationLogger
 
 
 class VerificationModule(commands.Cog):
 
-    def __init__(self, bot: discord.ext.commands.Bot, con: sqlite3.Connection):
+    def __init__(self, bot: discord.ext.commands.Bot, con: aiosqlite.Connection):
+        self.cur = None
         self.replaceable_roles = self.fetch_replaceable_roles()
         self.__cog_name__ = "verification"
         self.bot = bot
         self.tree = bot.tree
-        self.cur = con.cursor()
         self.con = con
 
         channel = bot.get_channel(int(os.getenv("REPORTS_CHANNEL")))
         self.verification_logger = VerificationLogger(channel)
 
     async def cog_load(self) -> None:
+        self.cur = await self.con.cursor()
+
         await self.verification_logger.enable()
 
     def fetch_replaceable_roles(self):
@@ -36,15 +37,17 @@ class VerificationModule(commands.Cog):
             roles = json.load(file)
             return roles["roles"]
 
-    def get_synced_messages(self):
-        result = self.cur.execute(
+    async def get_synced_messages(self):
+        await self.cur.execute(
             'SELECT *  FROM synced_verification_messages'
-        ).fetchall()
+        )
+
+        result = await self.cur.fetchall()
 
         return result
 
     async def refresh_messages(self):
-        for message in self.get_synced_messages():
+        for message in await self.get_synced_messages():
             guild = self.bot.get_guild(message["guild_id"])
             channel = guild.get_channel(message["channel_id"])
 
@@ -64,8 +67,8 @@ class VerificationModule(commands.Cog):
 
     # Tijdelijke hack, in de toekomst integreren we dit in een "VerifiedUser" class
     async def get_uid_by_email(self, email: str):
-        self.cur.execute('SELECT user_id FROM verified_users WHERE `email` = ?', (email,))
-        result = self.cur.fetchone()
+        await self.cur.execute('SELECT user_id FROM verified_users WHERE `email` = ?', (email,))
+        result = await self.cur.fetchone()
 
         return result[0]
 
@@ -91,16 +94,16 @@ class VerificationModule(commands.Cog):
 
         global_embed_msg = await interaction.channel.send(embed=embed, view=view)
 
-        self.cur.execute(
+        await self.cur.execute(
             "INSERT INTO synced_verification_messages (`guild_id`, `channel_id`, `message_id`) values(?, ?, ?)",
             (global_embed_msg.guild.id, global_embed_msg.channel.id, global_embed_msg.id))
-        self.con.commit()
+        await self.con.commit()
         await interaction.followup.send("OK")
 
     async def unregister_verification_channel(self, message_id: int):
-        self.cur.execute(
+        await self.cur.execute(
             "DELETE FROM synced_verification_messages WHERE message_id = ?", (message_id,))
-        self.con.commit()
+        await self.con.commit()
 
     async def get_students(self):
         with open("assets/memberships.json") as file:
@@ -149,8 +152,8 @@ class VerificationModule(commands.Cog):
         email = student.email
 
         code = random.randint(10000, 99999)
-        self.cur.execute('INSERT OR REPLACE into verification_codes (`code`, `email`) values (?, ?)', (code, email))
-        self.con.commit()
+        await self.cur.execute('INSERT OR REPLACE into verification_codes (`code`, `email`) values (?, ?)', (code, email))
+        await self.con.commit()
 
         await self.verification_logger.on_code_creation(code, student)
 
@@ -189,19 +192,19 @@ class VerificationModule(commands.Cog):
 
         await self.verification_logger.user_verified(member, student)
 
-        self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`, `email`) values(?, ?)',
+        await self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`, `email`) values(?, ?)',
                          (member.id, student.email))
-        self.con.commit()
+        await self.con.commit()
 
     async def is_email_verified(self, email: str):
-        self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `email` = ?', (email,))
-        result = self.cur.fetchone()
+        await self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `email` = ?', (email,))
+        result = await self.cur.fetchone()
 
         return result[0] > 0
 
     async def is_verified(self, user_id: int):
-        self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `user_id` = ?', (user_id,))
-        result = self.cur.fetchone()
+        await self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `user_id` = ?', (user_id,))
+        result = await self.cur.fetchone()
 
         return result[0] > 0
 
