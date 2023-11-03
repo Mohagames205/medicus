@@ -11,22 +11,7 @@ class VerificationButton(ui.Button):
         self.verification_module = verification_module
 
     async def callback(self, interaction: discord.Interaction):
-
-        if await self.verification_module.is_verified(interaction.user.id):
-            embed = discord.Embed(
-                colour=discord.Color.red(),
-                title="Reeds geverifieerd",
-                description="Volgens onze gegevens ben je al geverifieerd in deze Discord-server. Dit incident is "
-                            "gemeld."
-            )
-
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-
-            await self.verification_module.verification_logger.already_id_verified(interaction.user)
-            return
-
         await interaction.response.send_modal(self.modal(self.verification_module))
-
         await self.verification_module.refresh_messages()
 
 
@@ -37,17 +22,6 @@ class InputCodeButton(ui.Button):
         self.verification_module = verification_module
 
     async def callback(self, interaction: discord.Interaction):
-        if await self.verification_module.is_verified(interaction.user.id):
-            embed = discord.Embed(
-                colour=discord.Color.red(),
-                title="Reeds geverifieerd",
-                description="Volgens onze gegevens ben je al geverifieerd in deze Discord-server. Dit incident is "
-                            "gemeld."
-            )
-
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
         await interaction.response.send_modal(VerificationModal(self.student, self.verification_module))
 
 
@@ -60,6 +34,7 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
         self.verification_module = verification_module
 
     async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
 
         student = await self.verification_module.get_student(self.firstname.value, self.familyname.value)
         if student is not None:
@@ -73,7 +48,7 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
                     color=discord.Color.red()
                 )
 
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=True)
 
                 return
 
@@ -87,7 +62,7 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
                 timeout=None
             )
             view.add_item(InputCodeButton(student, self.verification_module))
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "Gelieve je studentenmail te checken voor een verificatiecode. Druk vervolgens op de onderstaande knop.",
                 view=view, ephemeral=True)
         else:
@@ -97,7 +72,7 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
                 color=discord.Color.red()
             )
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
 
 class VerificationModal(ui.Modal, title='Verificatiecode studentenmail'):
