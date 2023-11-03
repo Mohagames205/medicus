@@ -52,10 +52,8 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
 
                 return
 
-
             code = await self.verification_module.create_verification_code(student)
 
-            print(code)
             self.verification_module.send_mail(student.email, code)
 
             view = ui.View(

@@ -13,11 +13,12 @@ from ics import Calendar, Event
 from dotenv import load_dotenv
 import logging
 
+import aiosqlite
+
 from schedule.schedule import ScheduleModule
 from verification.verification import VerificationModule
 
 brussels_timezone = pytz.timezone('Europe/Brussels')
-
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -28,32 +29,11 @@ tree = client.tree
 
 embed_messages = {}
 
-con = sqlite3.connect("bot.db")
-con.row_factory = sqlite3.Row  # https://stackoverflow.com/questions/3300464/how-can-i-get-dict-from-sqlite-query
-cur = con.cursor()
-cur.execute(
-    'CREATE TABLE IF NOT EXISTS subscribed_messages (id INTEGER PRIMARY KEY, channel_id INTEGER, message_id INTEGER, '
-    'guild_id INTEGER, phase INTEGER);')
-
-cur.execute(
-    'CREATE TABLE IF NOT EXISTS calendars (id INTEGER PRIMARY KEY, link TEXT, phase INTEGER UNIQUE);')
-
-cur.execute(
-    'CREATE TABLE IF NOT EXISTS verification_codes (id INTEGER PRIMARY KEY, code INTEGER, email VARCHAR(255) UNIQUE)'
-)
-
-cur.execute(
-    'CREATE TABLE IF NOT EXISTS verified_users (id INTEGER PRIMARY KEY, user_id INTEGER UNIQUE, email VARCHAR(255) UNIQUE)'
-)
-
-cur.execute(
-    'CREATE TABLE IF NOT EXISTS synced_verification_messages (id INTEGER PRIMARY KEY, guild_id INTEGER, channel_id '
-    'INTEGER, message_id INTEGER)'
-)
-
 
 @client.event
 async def on_ready():
+    await initialise_db()
+
     await client.add_cog(VerificationModule(client, con))
     await client.add_cog(ScheduleModule(client, con))
 
@@ -67,6 +47,31 @@ async def on_ready():
     await client.get_cog("verification").refresh_messages()
 
     logging.info("BOT IS READY")
+
+
+async def initialise_db():
+    con = sqlite3.connect("bot.db")
+    con.row_factory = sqlite3.Row  # https://stackoverflow.com/questions/3300464/how-can-i-get-dict-from-sqlite-query
+    cur = con.cursor()
+    cur.execute(
+        'CREATE TABLE IF NOT EXISTS subscribed_messages (id INTEGER PRIMARY KEY, channel_id INTEGER, message_id INTEGER, '
+        'guild_id INTEGER, phase INTEGER);')
+
+    cur.execute(
+        'CREATE TABLE IF NOT EXISTS calendars (id INTEGER PRIMARY KEY, link TEXT, phase INTEGER UNIQUE);')
+
+    cur.execute(
+        'CREATE TABLE IF NOT EXISTS verification_codes (id INTEGER PRIMARY KEY, code INTEGER, email VARCHAR(255) UNIQUE)'
+    )
+
+    cur.execute(
+        'CREATE TABLE IF NOT EXISTS verified_users (id INTEGER PRIMARY KEY, user_id INTEGER UNIQUE, email VARCHAR(255) UNIQUE)'
+    )
+
+    cur.execute(
+        'CREATE TABLE IF NOT EXISTS synced_verification_messages (id INTEGER PRIMARY KEY, guild_id INTEGER, channel_id '
+        'INTEGER, message_id INTEGER)'
+    )
 
 
 client.run(os.getenv("token"))
