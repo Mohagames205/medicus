@@ -5,6 +5,6 @@ LABEL Maintainer="mootje.be"
 WORKDIR /home
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir aiohttp discord.py[voice] ics python-dotenv pytz sendgrid
+    pip install --no-cache-dir aiohttp discord.py[voice] ics python-dotenv pytz sendgrid aiosqlite
 
 CMD [ "python", "./bot.py"]
