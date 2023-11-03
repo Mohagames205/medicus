@@ -152,13 +152,13 @@ class VerificationModule(commands.Cog):
         email = student.email
 
         code = random.randint(10000, 99999)
-        await self.cur.execute('INSERT OR REPLACE into verification_codes (`code`, `email`) values (?, ?)', (code, email))
+        await self.cur.execute('INSERT OR REPLACE into verification_codes (`code`, `email`) values (?, ?)',
+                               (code, email))
         await self.con.commit()
 
         await self.verification_logger.on_code_creation(code, student)
 
         return code
-
 
     # TODO: force verify should use the student e-mail, at this moment that isn't possible because get_student only accepts a name and surname.
     @app_commands.command()
@@ -179,6 +179,16 @@ class VerificationModule(commands.Cog):
 
             await int.response.send_message(f"{user.mention} is succesvol geverifieerd!")
 
+        # TODO: force verify should use the student e-mail, at this moment that isn't possible because get_student only accepts a name and surname.
+        @app_commands.command()
+        async def force_unverify_user(self, int: discord.Interaction, member: discord.Member):
+
+            if await self.is_verified(member.id):
+                await self.cur.execute('DELETE FROM verified_users WHERE user_id = ?', (member.id,))
+                await self.con.commit()
+
+                await int.response.send_message(f"{user.mention} is succesvol gedeverifieerd!")
+
     async def verify_user(self, member: discord.Member, student: verificationuser.VerificationUser):
         role = member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID')))
 
@@ -193,7 +203,7 @@ class VerificationModule(commands.Cog):
         await self.verification_logger.user_verified(member, student)
 
         await self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`, `email`) values(?, ?)',
-                         (member.id, student.email))
+                               (member.id, student.email))
         await self.con.commit()
 
     async def is_email_verified(self, email: str):
