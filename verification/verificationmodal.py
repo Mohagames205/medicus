@@ -1,7 +1,7 @@
 import discord
 from discord import ui
 
-from verification import verification
+import verification.verificationuser
 
 
 class VerificationButton(ui.Button):
