@@ -179,18 +179,18 @@ class VerificationModule(commands.Cog):
 
             await int.response.send_message(f"{user.mention} is succesvol geverifieerd!")
 
-        # TODO: force verify should use the student e-mail, at this moment that isn't possible because get_student only accepts a name and surname.
-        @app_commands.command()
-        async def force_unverify_user(self, int: discord.Interaction, member: discord.Member):
+    # TODO: force verify should use the student e-mail, at this moment that isn't possible because get_student only accepts a name and surname.
+    @app_commands.command()
+    async def force_unverify_user(self, int: discord.Interaction, member: discord.Member):
 
-            if await self.is_verified(member.id):
-                await int.response.defer()
-                await self.cur.execute('DELETE FROM verified_users WHERE user_id = ?', (member.id,))
-                await self.con.commit()
+        if await self.is_verified(member.id):
+            await int.response.defer()
+            await self.cur.execute('DELETE FROM verified_users WHERE user_id = ?', (member.id,))
+            await self.con.commit()
 
-                await int.followup.send(f"{member.mention} is succesvol gedeverifieerd!")
-            else:
-                await int.followup.send(f"A sahbe, {member.mention} is niet eens geverifieerd. Rwina!")
+            await int.followup.send(f"{member.mention} is succesvol gedeverifieerd!")
+        else:
+            await int.followup.send(f"A sahbe, {member.mention} is niet eens geverifieerd. Rwina!")
 
     async def verify_user(self, member: discord.Member, student: verificationuser.VerificationUser):
         role = member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID')))
