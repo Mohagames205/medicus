@@ -1,4 +1,5 @@
 import logging
+import os
 
 import discord
 
@@ -22,7 +23,8 @@ class VerificationLogger:
         self.logging_channel = channel
 
     async def enable(self):
-        await self.broadcast_info("Verification logger has been enabled")
+        if os.getenv("ENVIRONMENT") != "dev":
+            await self.broadcast_info("Verification logger has been enabled")
 
     async def send_embed(self, title: str, message: str, fields=None, color: discord.Color = discord.Color.blue(),
                          external_message: str = ""):

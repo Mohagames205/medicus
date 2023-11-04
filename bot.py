@@ -12,9 +12,14 @@ import db.connection_manager
 from schedule.schedule import ScheduleModule
 from verification.verification import VerificationModule
 
+load_dotenv()
+
+if os.getenv("PYTHONASYNCIODEBUG") == "1":
+    logging.basicConfig(level=logging.DEBUG)
+
 brussels_timezone = pytz.timezone('Europe/Brussels')
 
-load_dotenv()
+
 logging.basicConfig(level=logging.INFO)
 
 intents = discord.Intents.all()
@@ -74,3 +79,4 @@ async def initialise_db():
 
 
 client.run(os.getenv("token"))
+

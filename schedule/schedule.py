@@ -150,7 +150,7 @@ class ScheduleModule(commands.Cog):
         await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal")
         await interaction.channel.send(embed=embed)
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=60)
     async def check_ical(self):
         for guild in self.bot.guilds:
 
