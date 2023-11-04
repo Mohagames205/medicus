@@ -112,7 +112,7 @@ class VerificationLogger:
 
         fields = [
             VerificationField("Gekicked door", cause.mention),
-            VerificationField("Slactoffer", f"{victim.mention}({victim.name})"),
+            VerificationField("Slachtoffer", f"{victim.mention}({victim.name})"),
             VerificationField("Gedeverifieerd?", "Ja" if unverified else "Neen")
         ]
 
