@@ -138,21 +138,33 @@ class VerificationModule(commands.Cog):
             await int.followup.send(f"{member.mention} is succesvol geverifieerd!")
 
     @app_commands.command()
-    async def force_unverify_user(self, int: discord.Interaction, member: discord.Member):
-        await int.response.defer()
+    async def force_unverify_user(self, interaction: discord.Interaction, member: discord.Member):
+        await interaction.response.defer()
 
         student = await verificationuser.Student.from_discord_uid(member.id)
         if student:
             await student.unverify()
-            await int.followup.send(f"{member.mention} is succesvol gedeverifieerd!")
+
+            replaceable_roles = VerificationModule.replaceable_roles
+
+            roles_to_remove = [member.guild.get_role(replaceable_roles[str(role.id)]) for role in member.roles if str(role.id) in list(replaceable_roles.keys())]
+            await member.remove_roles(*roles_to_remove)
+
+            await member.add_roles(member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))))
+
+            await interaction.followup.send(f"{member.mention} is succesvol gedeverifieerd!")
         else:
-            await int.followup.send(f"A sahbe, {member.mention} is niet eens geverifieerd. Rwina!")
+            await interaction.followup.send(f"A sahbe, {member.mention} is niet eens geverifieerd. Rwina!")
 
     async def is_verified(self, user_id: int):
         await self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `user_id` = ?', (user_id,))
         result = await self.cur.fetchone()
 
         return result[0] > 0
+
+    @app_commands.command()
+    async def kick(self, int: discord.Interaction, member: discord.Member, unverify: bool = False):
+        pass
 
     @commands.Cog.listener('on_member_join')
     async def on_verified_member_join(self, member: discord.Member):
