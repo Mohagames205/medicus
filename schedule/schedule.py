@@ -1,13 +1,14 @@
 import json
-import sqlite3
-from discord import app_commands, ui
+import logging
+
 import aiohttp
+import aiosqlite
 import discord
-from discord.ext import tasks, commands
 import pytz
 from arrow import Arrow
+from discord import app_commands
+from discord.ext import tasks, commands
 from ics import Calendar, Event
-import logging
 
 brussels_timezone = pytz.timezone('Europe/Brussels')
 
@@ -23,15 +24,17 @@ class CourseEvent:
 
 
 class ScheduleModule(commands.Cog):
-
     blacklist = json.load(open('assets/schedule_filter.json'))["filter"]
 
-    def __init__(self, bot, con: sqlite3.Connection):
+    def __init__(self, bot, con: aiosqlite.Connection):
+        self.cur = None
         self.__cog_name__ = "scheduling"
         self.bot = bot
         self.tree = bot.tree
-        self.cur = con.cursor()
         self.con = con
+
+    async def cog_load(self) -> None:
+        self.cur = await self.con.cursor()
         self.check_ical.start()
 
     async def get_file_content(self, url):
@@ -81,7 +84,6 @@ class ScheduleModule(commands.Cog):
 
                 if event.name in self.blacklist:
                     continue
-
 
                 event_begin = Arrow.fromdatetime(event.begin, tzinfo=brussels_timezone)
                 event_end = Arrow.fromdatetime(event.end, tzinfo=brussels_timezone)
@@ -169,25 +171,26 @@ class ScheduleModule(commands.Cog):
             await self.unregister_message(payload.message_id)
 
     async def register_calendar(self, link: str, phase: int):
-        self.cur.execute('INSERT INTO calendars (`link`, `phase`) values (?, ?)',
-                         (link, phase))
-        self.con.commit()
+        await self.cur.execute('INSERT INTO calendars (`link`, `phase`) values (?, ?)',
+                               (link, phase))
+        await self.con.commit()
 
     async def fetch_calendar(self, phase: int):
-        self.cur.execute('SELECT * FROM calendars WHERE `phase` = ?', (phase,))
-        result = self.cur.fetchone()
+        await self.cur.execute('SELECT * FROM calendars WHERE `phase` = ?', (phase,))
+        result = await self.cur.fetchone()
 
         return result["link"] if result else None
 
     async def is_subscribed_message(self, message_id: int):
-        result = self.cur.execute('SELECT count(*) FROM subscribed_messages WHERE `message_id` = ?',
-                                  (message_id,)).fetchone()
+        await self.cur.execute('SELECT count(*) FROM subscribed_messages WHERE `message_id` = ?',
+                               (message_id,))
+        result = await self.cur.fetchone()
 
         return result[0] > 0
 
     async def fetch_messages(self, guild: discord.Guild):
-        self.cur.execute('SELECT * FROM subscribed_messages WHERE `guild_id` = ?', (guild.id,))
-        results = self.cur.fetchall()
+        await self.cur.execute('SELECT * FROM subscribed_messages WHERE `guild_id` = ?', (guild.id,))
+        results = await self.cur.fetchall()
 
         messages = []
         for result in results:
@@ -206,11 +209,11 @@ class ScheduleModule(commands.Cog):
         return messages
 
     async def register_message(self, phase: int, message: discord.Message):
-        self.cur.execute(
+        await self.cur.execute(
             'INSERT INTO subscribed_messages (`phase`, `channel_id`, `message_id`, `guild_id`) values (?, ?, ?, ?)',
             (phase, message.channel.id, message.id, message.guild.id))
-        self.con.commit()
+        await self.con.commit()
 
     async def unregister_message(self, message_id: int):
-        self.cur.execute('DELETE FROM subscribed_messages WHERE message_id = ?', (message_id,))
-        self.con.commit()
+        await self.cur.execute('DELETE FROM subscribed_messages WHERE message_id = ?', (message_id,))
+        await self.con.commit()
