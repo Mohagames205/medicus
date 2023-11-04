@@ -163,18 +163,6 @@ class VerificationModule(commands.Cog):
 
         await VerificationModule.logger.on_verified_user_join(member)
 
-    async def replace_verification_roles(self, member: discord.Member):
-        roles = member.roles
-
-        for role in roles:
-            if str(role.id) in list(self.replaceable_roles.keys()):
-                real_role = member.guild.get_role(self.replaceable_roles[str(role.id)])
-                if member.get_role(real_role.id) is None:
-                    await member.add_roles(real_role)
-
-                # await member.remove_roles(role)
-                # don't remove the role, so when the user decides to change the role after onboarding, the bot can detect that and change the role for the user
-
     def get_sync_roles(self, roles_1, roles_2, member: discord.Member):
         role_diff = set(roles_2) - set(roles_1)
         subscribed_roles = [member.guild.get_role(self.replaceable_roles[str(role.id)]) for role in role_diff if
