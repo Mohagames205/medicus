@@ -1,3 +1,5 @@
+import os
+
 import discord
 from discord import ui
 
@@ -5,13 +7,12 @@ import verification.verificationuser
 
 
 class VerificationButton(ui.Button):
-    def __init__(self, label, modal, verification_module):
+    def __init__(self, label, verification_module):
         super().__init__(label=label, emoji="📥")
-        self.modal = modal
         self.verification_module = verification_module
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(self.modal(self.verification_module))
+        await interaction.response.send_modal(CollectNameModal(self.verification_module))
         await self.verification_module.refresh_messages()
 
 
@@ -25,9 +26,8 @@ class InputCodeButton(ui.Button):
         await interaction.response.send_modal(VerificationModal(self.student, self.verification_module))
 
 
-class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
-    firstname = ui.TextInput(label='Voornaam')
-    familyname = ui.TextInput(label='Achternaam')
+class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
+    studentmail = ui.TextInput(label="Studentenmail", placeholder="voornaam.achternaam@student.kuleuven.be")
 
     def __init__(self, verification_module):
         super().__init__()
@@ -36,11 +36,15 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
-        student = await self.verification_module.get_student(self.firstname.value, self.familyname.value)
+        student = await verification.verificationuser.PartialStudent.get_by_email(self.studentmail.value)
+
         if student is not None:
 
-            if await self.verification_module.is_email_verified(student.email):
-                await self.verification_module.verification_logger.already_email_verified(interaction.user, student, await self.verification_module.get_uid_by_email(student.email))
+            # fetches the full verified student object, which includes the discord uid
+            verified_student = await student.full()
+
+            if verified_student:
+                await verification.verification.VerificationModule.logger.already_email_verified(interaction.user, verified_student)
 
                 embed = discord.Embed(
                     title="Verificatie mislukt",
@@ -49,12 +53,12 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
                 )
 
                 await interaction.followup.send(embed=embed, ephemeral=True)
-
                 return
 
-            code = await self.verification_module.create_verification_code(student)
+            code = await student.create_verification_code()
 
-            self.verification_module.send_mail(student.email, code)
+            if os.getenv("ENVIRONMENT").lower() != "dev":
+                self.verification_module.send_mail(student.email, code)
 
             view = ui.View(
                 timeout=None
@@ -76,7 +80,7 @@ class CollectNameModal(ui.Modal, title="Geef je voor- en achternaam"):
 class VerificationModal(ui.Modal, title='Verificatiecode studentenmail'):
     code = ui.TextInput(label='Verificatiecode')
 
-    def __init__(self, student: verification.verificationuser.VerificationUser, verification_module):
+    def __init__(self, student: verification.verificationuser.PartialStudent, verification_module):
         super().__init__()
         self.verification_module = verification_module
         self.student = student
@@ -92,7 +96,7 @@ class VerificationModal(ui.Modal, title='Verificatiecode studentenmail'):
         await interaction.response.defer()
 
         if inputted_code == sent_code:
-            await self.verification_module.verify_user(interaction.user, self.student)
+            await self.student.verify(interaction.user)
 
             embed = discord.Embed(
                 title="Succesvol geverifieerd",
