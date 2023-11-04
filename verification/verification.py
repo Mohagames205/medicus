@@ -14,23 +14,37 @@ from verification import verificationuser
 from verification.verification_logger import VerificationLogger
 
 
+class VerificationView(discord.ui.View):
+
+    def __init__(self, module):
+        super().__init__(timeout=None)
+        self.add_item(verificationmodal.VerificationButton("Vraag code aan",
+                                                           module))
+
+
 class VerificationModule(commands.Cog):
+
+    logger = None
+    replaceable_roles = None
 
     def __init__(self, bot: discord.ext.commands.Bot, con: aiosqlite.Connection):
         self.cur = None
+        # still here for BC
         self.replaceable_roles = self.fetch_replaceable_roles()
+
+        VerificationModule.replaceable_roles = self.fetch_replaceable_roles()
         self.__cog_name__ = "verification"
         self.bot = bot
         self.tree = bot.tree
         self.con = con
 
         channel = bot.get_channel(int(os.getenv("REPORTS_CHANNEL")))
-        self.verification_logger = VerificationLogger(channel)
+        VerificationModule.logger = VerificationLogger(channel)
 
     async def cog_load(self) -> None:
         self.cur = await self.con.cursor()
 
-        await self.verification_logger.enable()
+        await VerificationModule.logger.enable()
 
     def fetch_replaceable_roles(self):
         with open("assets/role_verification.json") as file:
@@ -53,24 +67,12 @@ class VerificationModule(commands.Cog):
 
             try:
                 message = await channel.get_partial_message(message["message_id"]).fetch()
-                view = discord.ui.View(
-                    timeout=None
-                )
-                view.add_item(
-                    verificationmodal.VerificationButton("Vraag code aan", verificationmodal.CollectNameModal,
-                                                         self))
-                await message.edit(view=view)
+
+                await message.edit(view=VerificationView(self))
             except discord.errors.NotFound:
                 print(f"Unregistering non existent message with ID: {message['message_id']}")
                 await self.unregister_verification_channel(message["message_id"])
                 continue
-
-    # Tijdelijke hack, in de toekomst integreren we dit in een "VerifiedUser" class
-    async def get_uid_by_email(self, email: str):
-        await self.cur.execute('SELECT user_id FROM verified_users WHERE `email` = ?', (email,))
-        result = await self.cur.fetchone()
-
-        return result[0]
 
     @app_commands.command(name="setverificationchannel")
     async def set_verification_channel(self, interaction: discord.Interaction):
@@ -86,13 +88,7 @@ class VerificationModule(commands.Cog):
             color=discord.Color.blue()
         )
 
-        view = discord.ui.View(
-            timeout=None
-        )
-        view.add_item(
-            verificationmodal.VerificationButton("Vraag code aan", verificationmodal.CollectNameModal, self))
-
-        global_embed_msg = await interaction.channel.send(embed=embed, view=view)
+        global_embed_msg = await interaction.channel.send(embed=embed, view=VerificationView(self))
 
         await self.cur.execute(
             "INSERT INTO synced_verification_messages (`guild_id`, `channel_id`, `message_id`) values(?, ?, ?)",
@@ -104,25 +100,6 @@ class VerificationModule(commands.Cog):
         await self.cur.execute(
             "DELETE FROM synced_verification_messages WHERE message_id = ?", (message_id,))
         await self.con.commit()
-
-    async def get_students(self):
-        with open("assets/memberships.json") as file:
-            memberships_raw = json.load(file)
-            result = memberships_raw["results"]
-
-            users = [verificationuser.VerificationUser(user["user"]["givenName"], user["user"]["familyName"],
-                                                       user["user"]["emailAddress"])
-                     if "emailAddress" in user["user"]
-                     else verificationuser.VerificationUser(user["user"]["givenName"], user["user"]["familyName"], None)
-                     for user in result]
-
-            return users
-
-    async def get_student(self, voornaam, achternaam):
-        for student in await self.get_students():
-            if voornaam.lower() == student.name.lower() and achternaam.lower() == student.surname.lower():
-                return student
-        return None
 
     def send_mail(self, email, code):
         with open('assets/email.html') as file:
@@ -142,32 +119,18 @@ class VerificationModule(commands.Cog):
         except Exception as e:
             print(e.message)
 
-    async def is_student(self, voornaam, achternaam):
-        return any(
-            voornaam.lower() == student.name.lower() and achternaam.lower() == student.surname.lower() for student
-            in await self.get_students())
-
-    async def create_verification_code(self, student: verificationuser.VerificationUser):
-
-        email = student.email
-
-        code = random.randint(10000, 99999)
-        await self.cur.execute('INSERT OR REPLACE into verification_codes (`code`, `email`) values (?, ?)',
-                               (code, email))
-        await self.con.commit()
-
-        await self.verification_logger.on_code_creation(code, student)
-
-        return code
-
-    # TODO: force verify should use the student e-mail, at this moment that isn't possible because get_student only accepts a name and surname.
     @app_commands.command()
-    async def force_verify_user(self, int: discord.Interaction, user: discord.Member, name: str, surname: str):
+    async def force_verify_user(self, int: discord.Interaction, member: discord.Member, email: str, voornaam: str = "", achternaam: str = ""):
+        await int.response.defer()
 
-        student = await self.get_student(name, surname)
+        if not email.lower().endswith("@student.kuleuven.be"):
+            await int.followup.send(f"Het opgegeven e-mailadres is ongeldig!")
+            return
+
+        student = verificationuser.PartialStudent(email, voornaam, achternaam)
 
         if student:
-            await self.verify_user(user, student)
+            await student.verify(member)
 
             embed = discord.Embed(
                 title="Succesvol geverifieerd",
@@ -175,45 +138,27 @@ class VerificationModule(commands.Cog):
                 color=discord.Color.from_rgb(82, 189, 236)
             )
 
-            await user.send(embed=embed)
-
-            await int.response.send_message(f"{user.mention} is succesvol geverifieerd!")
+            await member.send(embed=embed)
+            await int.followup.send(f"{member.mention} is succesvol geverifieerd!")
 
     @app_commands.command()
-    async def force_unverify_user(self, int: discord.Interaction, member: discord.Member):
-        await int.response.defer()
+    async def force_unverify_user(self, interaction: discord.Interaction, member: discord.Member):
+        await interaction.response.defer()
 
-        if await self.is_verified(member.id):
+        student = await verificationuser.Student.from_discord_uid(member.id)
+        if student:
+            await student.unverify()
 
-            await self.cur.execute('DELETE FROM verified_users WHERE user_id = ?', (member.id,))
-            await self.con.commit()
+            replaceable_roles = VerificationModule.replaceable_roles
 
-            await int.followup.send(f"{member.mention} is succesvol gedeverifieerd!")
+            roles_to_remove = [member.guild.get_role(replaceable_roles[str(role.id)]) for role in member.roles if str(role.id) in list(replaceable_roles.keys())]
+            await member.remove_roles(*roles_to_remove)
+
+            await member.add_roles(member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))))
+
+            await interaction.followup.send(f"{member.mention} is succesvol gedeverifieerd!")
         else:
-            await int.followup.send(f"A sahbe, {member.mention} is niet eens geverifieerd. Rwina!")
-
-    async def verify_user(self, member: discord.Member, student: verificationuser.VerificationUser):
-        role = member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID')))
-
-        try:
-            await member.edit(nick=student.name)
-        except Exception as er:
-            print(er)
-
-        await member.remove_roles(role)
-        await self.replace_verification_roles(member)
-
-        await self.verification_logger.user_verified(member, student)
-
-        await self.cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`, `email`) values(?, ?)',
-                               (member.id, student.email))
-        await self.con.commit()
-
-    async def is_email_verified(self, email: str):
-        await self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `email` = ?', (email,))
-        result = await self.cur.fetchone()
-
-        return result[0] > 0
+            await interaction.followup.send(f"A sahbe, {member.mention} is niet eens geverifieerd. Rwina!")
 
     async def is_verified(self, user_id: int):
         await self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `user_id` = ?', (user_id,))
@@ -221,25 +166,18 @@ class VerificationModule(commands.Cog):
 
         return result[0] > 0
 
+    @app_commands.command()
+    async def kick(self, int: discord.Interaction, member: discord.Member, unverify: bool = False):
+        pass
+
     @commands.Cog.listener('on_member_join')
     async def on_verified_member_join(self, member: discord.Member):
-        if not await self.is_verified(member.id):
+        student = await verificationuser.Student.from_discord_uid(member.id)
+        if student is None:
             await member.add_roles(member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))))
             return
 
-        await self.verification_logger.on_verified_user_join(member)
-
-    async def replace_verification_roles(self, member: discord.Member):
-        roles = member.roles
-
-        for role in roles:
-            if str(role.id) in list(self.replaceable_roles.keys()):
-                real_role = member.guild.get_role(self.replaceable_roles[str(role.id)])
-                if member.get_role(real_role.id) is None:
-                    await member.add_roles(real_role)
-
-                # await member.remove_roles(role)
-                # don't remove the role, so when the user decides to change the role after onboarding, the bot can detect that and change the role for the user
+        await VerificationModule.logger.on_verified_user_join(member)
 
     def get_sync_roles(self, roles_1, roles_2, member: discord.Member):
         role_diff = set(roles_2) - set(roles_1)
@@ -251,7 +189,8 @@ class VerificationModule(commands.Cog):
 
     @commands.Cog.listener('on_member_update')
     async def on_role_update(self, before: discord.Member, after: discord.Member):
-        if await self.is_verified(after.id):
+        student = await verificationuser.Student.from_discord_uid(after.id)
+        if student:
 
             if len(before.roles) < len(after.roles):
                 roles = [role for role in self.get_sync_roles(before.roles, after.roles, after) if

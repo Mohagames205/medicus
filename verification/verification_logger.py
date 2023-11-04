@@ -51,7 +51,7 @@ class VerificationLogger:
         logging.info(msg + str_fields)
         await self.send_embed(message=msg, fields=fields, title=title)
 
-    async def user_verified(self, member: discord.Member, student: verificationuser.VerificationUser):
+    async def user_verified(self, member: discord.Member, student: verificationuser.PartialStudent):
 
         fields = [
             VerificationField("Naam", student.name),
@@ -62,7 +62,7 @@ class VerificationLogger:
         await self.broadcast_info(f"{member.mention} is geverifieerd als:", fields=fields,
                                   title="Nieuw lid geverifieerd")
 
-    async def on_code_creation(self, code: int, student: verificationuser.VerificationUser):
+    async def on_code_creation(self, code: int, student: verificationuser.PartialStudent):
         fields = [
             VerificationField("Code", str(code)),
             VerificationField("Naam", f"{student.name} {student.surname}"),
@@ -85,7 +85,7 @@ class VerificationLogger:
             str_fields += f"\n {str(field)}"
 
         logging.info(msg + str_fields)
-        await self.send_embed(external_message="<@&1157397256165658704>", message=msg, fields=fields, title=title,
+        await self.send_embed(external_message="<@&1157397256165658704->", message=msg, fields=fields, title=title,
                               color=discord.Color.orange())
 
     async def already_id_verified(self, member: discord.Member):
@@ -93,12 +93,12 @@ class VerificationLogger:
                                      msg=f"{member.mention} is al geverifieerd, maar probeert zich nogmaals te "
                                          f"verifiëren. Mogelijks is hier iets misgelopen?")
 
-    async def already_email_verified(self, member: discord.Member, student: verificationuser.VerificationUser, id: int):
+    async def already_email_verified(self, member: discord.Member, student: verificationuser.Student):
 
         fields = [
             VerificationField("Naam", f"{student.name} {student.surname}"),
             VerificationField("E-mail", student.email),
-            VerificationField("Reeds geverifieerd account", f"<@{id}>")
+            VerificationField("Reeds geverifieerd account", f"<@{student.discord_uid}>")
         ]
 
         await self.broadcast_warning(title="Poging tot verificatie ALT",
