@@ -8,6 +8,7 @@ import pytz
 from discord.ext import commands
 from dotenv import load_dotenv
 
+import db.connection_manager
 from schedule.schedule import ScheduleModule
 from verification.verification import VerificationModule
 
@@ -28,7 +29,7 @@ async def on_ready():
     con = await initialise_db()
 
     await client.add_cog(VerificationModule(client, con))
-    await client.add_cog(ScheduleModule(client, con))
+    #await client.add_cog(ScheduleModule(client, con))
 
     for guild in client.guilds:
         tree.copy_global_to(guild=discord.Object(id=guild.id))
@@ -65,6 +66,9 @@ async def initialise_db():
         'CREATE TABLE IF NOT EXISTS synced_verification_messages (id INTEGER PRIMARY KEY, guild_id INTEGER, channel_id '
         'INTEGER, message_id INTEGER)'
     )
+
+    cm = db.connection_manager.ConnectionManager(con)
+    await cm.initialize_cursor()
 
     return con
 
