@@ -168,6 +168,32 @@ class VerificationModule(commands.Cog):
 
         return result[0] > 0
 
+
+    @app_commands.command()
+    async def whois(self, interaction: discord.Interaction, member: discord.Member):
+        await interaction.response.defer()
+
+        student = await verificationuser.Student.from_discord_uid(member.id)
+
+        if student:
+            pt_student = await verificationuser.PartialStudent.get_by_email(student.email)
+
+            embed = discord.Embed(
+                title="Whois",
+                description=f"Meer informatie over {member.mention}",
+                color=discord.Color.blue()
+            )
+
+            embed.add_field(name="Naam", value=f"{pt_student.name} {pt_student.surname}" if pt_student else "Geen studentendata gevonden", inline=False)
+            embed.add_field(name="Email", value=f"{student.email}", inline=False)
+
+            await interaction.followup.send(embed=embed)
+            return
+
+        await interaction.followup.send("Deze persoon is waarschijnlijk niet geverifieerd.")
+
+
+
     @app_commands.command()
     async def kick(self, int: discord.Interaction, member: discord.Member, reason: str = "", unverify: bool = False):
 
