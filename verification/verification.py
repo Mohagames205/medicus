@@ -179,7 +179,8 @@ class VerificationModule(commands.Cog):
             pt_student = await verificationuser.PartialStudent.get_by_email(student.email)
 
             embed = discord.Embed(
-                title=f"Whois {member.mention}",
+                title="Whois",
+                description=f"Meer informatie over {member.mention}",
                 color=discord.Color.blue()
             )
 
