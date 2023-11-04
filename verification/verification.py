@@ -123,6 +123,10 @@ class VerificationModule(commands.Cog):
     async def force_verify_user(self, int: discord.Interaction, member: discord.Member, email: str, voornaam: str = "", achternaam: str = ""):
         await int.response.defer()
 
+        if not email.lower().endswith("@student.kuleuven.be"):
+            await int.followup.send(f"Het opgegeven e-mailadres is ongeldig!")
+            return
+
         student = verificationuser.PartialStudent(email, voornaam, achternaam)
 
         if student:
