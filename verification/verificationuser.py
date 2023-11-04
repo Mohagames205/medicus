@@ -2,7 +2,6 @@ import json
 import os
 import random
 
-import deprecation
 import discord
 
 import db.connection_manager
