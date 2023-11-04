@@ -120,7 +120,8 @@ class VerificationModule(commands.Cog):
             print(e.message)
 
     @app_commands.command()
-    async def force_verify_user(self, int: discord.Interaction, member: discord.Member, email: str, voornaam: str = "", achternaam: str = ""):
+    async def force_verify_user(self, int: discord.Interaction, member: discord.Member, email: str, voornaam: str = "",
+                                achternaam: str = ""):
         await int.response.defer()
 
         if not email.lower().endswith("@student.kuleuven.be"):
@@ -151,7 +152,8 @@ class VerificationModule(commands.Cog):
 
             replaceable_roles = VerificationModule.replaceable_roles
 
-            roles_to_remove = [member.guild.get_role(replaceable_roles[str(role.id)]) for role in member.roles if str(role.id) in list(replaceable_roles.keys())]
+            roles_to_remove = [member.guild.get_role(replaceable_roles[str(role.id)]) for role in member.roles if
+                               str(role.id) in list(replaceable_roles.keys())]
             await member.remove_roles(*roles_to_remove)
 
             await member.add_roles(member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))))
@@ -167,8 +169,31 @@ class VerificationModule(commands.Cog):
         return result[0] > 0
 
     @app_commands.command()
-    async def kick(self, int: discord.Interaction, member: discord.Member, unverify: bool = False):
-        pass
+    async def kick(self, int: discord.Interaction, member: discord.Member, reason: str = "", unverify: bool = False):
+
+        await int.response.defer()
+
+        student = await verificationuser.Student.from_discord_uid(member.id)
+
+        if unverify and student:
+            await student.unverify()
+
+        await VerificationModule.logger.on_user_kick(int.user, member, unverify)
+
+        await int.followup.send(f"{member.mention} is gekicked door {int.user.mention} omwille van: ```{reason if reason != '' else 'Geen reden opgegeven'}```")
+
+        embed = discord.Embed(
+            title="Je bent gekicked",
+            description="Je bent gekicked uit de Geneeskunde discord-groep. Indien je vragen of opmerkingen hebt, "
+                        "contacteer je het best <@326311622194888704>.",
+            color=discord.Color.red()
+        )
+
+        embed.add_field(name="Reden", value=reason if reason != '' else 'Geen reden opgegeven')
+
+        await member.send(embed=embed)
+
+        await member.kick(reason=reason)
 
     @commands.Cog.listener('on_member_join')
     async def on_verified_member_join(self, member: discord.Member):

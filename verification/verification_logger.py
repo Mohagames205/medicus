@@ -105,3 +105,19 @@ class VerificationLogger:
                                      msg=f"{member.mention} probeert een ander account te verifiëren, maar is al "
                                          f"geverifieerd.",
                                      fields=fields)
+
+    async def on_user_kick(self, cause: discord.Member, victim: discord.Member, unverified: bool):
+
+        v_student = await verificationuser.Student.from_discord_uid(victim.id)
+
+        fields = [
+            VerificationField("Gekicked door", cause.mention),
+            VerificationField("Slactoffer", f"{victim.mention}({victim.name})"),
+            VerificationField("Gedeverifieerd?", "Ja" if unverified else "Neen")
+        ]
+
+        if v_student:
+            fields.append(VerificationField("E-mail", v_student.email))
+
+        await self.broadcast_info(title="Lid ge-kicked", msg="",
+                                  fields=fields)
