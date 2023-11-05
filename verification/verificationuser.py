@@ -60,11 +60,6 @@ class PartialStudent:
 
         cur, con = PartialStudent.db()
 
-        try:
-            await member.edit(nick=self.name)
-        except Exception as er:
-            print(er)
-
         await member.remove_roles(role)
         await self.replace_verification_roles(member)
 
