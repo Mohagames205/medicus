@@ -62,10 +62,11 @@ class PartialStudent:
 
         try:
             await member.edit(nick=self.name)
-            await member.remove_roles(role)
-            await self.replace_verification_roles(member)
         except Exception as er:
             print(er)
+
+        await member.remove_roles(role)
+        await self.replace_verification_roles(member)
 
         await cur.execute('INSERT INTO verified_users (`user_id`, `email`) values(?, ?)',
                           (member.id, self.email))
