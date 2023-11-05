@@ -55,6 +55,19 @@ class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
                 await interaction.followup.send(embed=embed, ephemeral=True)
                 return
 
+            if await verification.verificationuser.Student.from_discord_uid(interaction.user.id):
+                embed = discord.Embed(
+                    colour=discord.Color.red(),
+                    title="Reeds geverifieerd",
+                    description="Volgens onze gegevens ben je al geverifieerd in deze Discord-server. Dit incident is "
+                                "gemeld."
+                )
+
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+
+                await self.verification_module.verification_logger.already_id_verified(interaction.user)
+                return
+
             code = await student.create_verification_code()
 
             if os.getenv("ENVIRONMENT").lower() != "dev":
