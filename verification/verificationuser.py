@@ -62,17 +62,16 @@ class PartialStudent:
 
         try:
             await member.edit(nick=self.name)
+            await member.remove_roles(role)
+            await self.replace_verification_roles(member)
         except Exception as er:
             print(er)
 
-        await member.remove_roles(role)
-        await self.replace_verification_roles(member)
-
-        await verification.verification.VerificationModule.logger.user_verified(member, self)
-
-        await cur.execute('INSERT OR IGNORE INTO verified_users (`user_id`, `email`) values(?, ?)',
+        await cur.execute('INSERT INTO verified_users (`user_id`, `email`) values(?, ?)',
                           (member.id, self.email))
         await con.commit()
+
+        await verification.verification.VerificationModule.logger.user_verified(member, self)
 
     async def replace_verification_roles(self, member: discord.Member):
         roles = member.roles
