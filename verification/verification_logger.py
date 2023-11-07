@@ -87,7 +87,7 @@ class VerificationLogger:
             str_fields += f"\n {str(field)}"
 
         logging.info(msg + str_fields)
-        await self.send_embed(external_message="<@&1157397256165658704->", message=msg, fields=fields, title=title,
+        await self.send_embed(external_message="<@&1157397256165658704>", message=msg, fields=fields, title=title,
                               color=discord.Color.orange())
 
     async def already_id_verified(self, member: discord.Member):
