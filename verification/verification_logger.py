@@ -123,3 +123,12 @@ class VerificationLogger:
 
         await self.broadcast_info(title="Lid ge-kicked", msg="",
                                   fields=fields)
+
+    async def on_ask_question(self, asker: discord.Member, question: str):
+
+        fields = [
+            VerificationField("Gesteld door", f"{asker.mention}({asker.name})"),
+            VerificationField("Vraag", question)
+        ]
+
+        await self.broadcast_info(title="Anonieme vraag", msg="", fields=fields)

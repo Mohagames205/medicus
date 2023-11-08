@@ -252,3 +252,18 @@ class VerificationModule(commands.Cog):
                 roles = [role for role in self.get_sync_roles(after.roles, before.roles, after) if
                          after.get_role(role.id)]
                 await after.remove_roles(*roles)
+
+    @app_commands.command(name="anonymous", description="Stel je vraag anoniem")
+    async def ask_anonymous(self, interaction: discord.Interaction, question: str):
+
+        await interaction.response.defer(ephemeral=True)
+
+        embed = discord.Embed(
+            title="Anonieme vraag",
+            description=f"{question}",
+            colour=discord.Color.purple()
+        )
+
+        await VerificationModule.logger.on_ask_question(interaction.user, question)
+        await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal")
+        await interaction.channel.send(embed=embed)
