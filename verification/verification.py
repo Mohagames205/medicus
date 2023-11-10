@@ -1,7 +1,10 @@
+import asyncio
+import datetime
 import json
+import logging
 import os
 import random
-
+import time
 import aiosqlite
 import discord
 from discord import app_commands
@@ -23,7 +26,6 @@ class VerificationView(discord.ui.View):
 
 
 class VerificationModule(commands.Cog):
-
     logger = None
     replaceable_roles = None
 
@@ -168,7 +170,6 @@ class VerificationModule(commands.Cog):
 
         return result[0] > 0
 
-
     @app_commands.command()
     async def whois(self, interaction: discord.Interaction, member: discord.Member):
         await interaction.response.defer()
@@ -184,15 +185,15 @@ class VerificationModule(commands.Cog):
                 color=discord.Color.blue()
             )
 
-            embed.add_field(name="Naam", value=f"{pt_student.name} {pt_student.surname}" if pt_student else "Geen studentendata gevonden", inline=False)
+            embed.add_field(name="Naam",
+                            value=f"{pt_student.name} {pt_student.surname}" if pt_student else "Geen studentendata gevonden",
+                            inline=False)
             embed.add_field(name="Email", value=f"{student.email}", inline=False)
 
             await interaction.followup.send(embed=embed)
             return
 
         await interaction.followup.send("Deze persoon is waarschijnlijk niet geverifieerd.")
-
-
 
     @app_commands.command()
     async def kick(self, int: discord.Interaction, member: discord.Member, reason: str = "", unverify: bool = False):
@@ -206,7 +207,8 @@ class VerificationModule(commands.Cog):
 
         await VerificationModule.logger.on_user_kick(int.user, member, unverify)
 
-        await int.followup.send(f"{member.mention} is gekicked door {int.user.mention} omwille van: ```{reason if reason != '' else 'Geen reden opgegeven'}```")
+        await int.followup.send(
+            f"{member.mention} is gekicked door {int.user.mention} omwille van: ```{reason if reason != '' else 'Geen reden opgegeven'}```")
 
         embed = discord.Embed(
             title="Je bent gekicked",
@@ -253,8 +255,57 @@ class VerificationModule(commands.Cog):
                          after.get_role(role.id)]
                 await after.remove_roles(*roles)
 
+    @app_commands.command(name='fixroles', description='Internal command, do not use if your name is not Mohamed!')
+    async def fix_roles(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if interaction.user.id != 326311622194888704:
+            await interaction.followup.send("You are not Mohamed, get out!")
+            return
 
-    
+        await interaction.followup.send("OK")
+        roles_added = 0
+        members_reviewed = 0
+
+        begin_time = time.time()
+
+        for member in interaction.guild.members:
+
+            # member doesn't have the 'not verified' role, so skip them
+            if member.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))):
+                continue
+
+            # student should not be verified to proceed
+            student = await verificationuser.Student.from_discord_uid(member.id)
+            if student is not None:
+                continue
+
+            members_reviewed += 1
+
+            replaceable_roles = VerificationModule.replaceable_roles
+            roles_inverted = dict((str(v), str(k)) for k, v in replaceable_roles.items())
+
+            roles_to_add = [member.guild.get_role(int(roles_inverted[str(role.id)])) for role in member.roles if
+                            role.id in list(replaceable_roles.values())]
+
+            roles_added += len(roles_to_add)
+
+            logging.info(f'Adding following roles to {member.mention}: ' + ', '.join(
+                [role.name for role in roles_to_add if role]))
+            await asyncio.sleep(1)
+
+        end_time = time.time()
+
+        embed = discord.Embed(
+            title="ALLE ROLLEN ZIJN INGESTELD (normaal gezien)",
+            description="OK",
+            color=discord.Color.yellow()
+        )
+
+        embed.add_field(name="Aantal rollen toegevoegd", value=f"{roles_added}")
+        embed.add_field(name="Aantal leden aangepast", value=f"{members_reviewed}")
+        embed.add_field(name="Duratie", value=f"{end_time - begin_time} seconden")
+
+        await interaction.channel.send(embed=embed)
 
     @app_commands.command(name="anonymous", description="Stel je vraag anoniem")
     async def ask_anonymous(self, interaction: discord.Interaction, question: str):
