@@ -287,6 +287,8 @@ class VerificationModule(commands.Cog):
             roles_to_add = [member.guild.get_role(int(roles_inverted[str(role.id)])) for role in member.roles if
                             role.id in list(replaceable_roles.values())]
 
+            await member.add_roles(*roles_to_add)
+
             roles_added += len(roles_to_add)
 
             logging.info(f'Adding following roles to {member.mention}: ' + ', '.join(
