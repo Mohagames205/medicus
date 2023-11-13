@@ -378,3 +378,9 @@ class VerificationModule(commands.Cog):
         message = await interaction.channel.send(embed=embed)
         await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal")
         await VerificationModule.logger.on_ask_question(interaction.user, question, message)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        channel = await member.guild.fetch_channel(int(os.getenv("WELCOME_CHANNEL")))
+        if channel is not None:
+            await channel.send(f'Welkom {member.mention}!! 🎊.')
