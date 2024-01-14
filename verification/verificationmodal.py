@@ -110,6 +110,7 @@ class VerificationModal(ui.Modal, title='Verificatiecode studentenmail'):
 
         if inputted_code == sent_code:
             await self.student.verify(interaction.user)
+            self.verification_module.bot.dispatch("on_verified_join", member=interaction.user)
 
             embed = discord.Embed(
                 title="Succesvol geverifieerd",

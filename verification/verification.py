@@ -388,7 +388,7 @@ class VerificationModule(commands.Cog):
             await interaction.followup.send("You are not Mohamed, get out!")
             return
 
-        role = interaction.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID')))
+        role = interaction.guild.get_role(1196200228580237372)
 
         count = 0
         unverified_count = 0
@@ -405,17 +405,12 @@ class VerificationModule(commands.Cog):
             if await verificationuser.Student.from_discord_uid(member.id):
                 continue
 
-
-
-            await self.cur.execute('INSERT INTO graced_users (`user_id`) values(?)', (member.id,))
-            await self.con.commit()
-
-            #await member.add_roles(role)
+            await member.add_roles(role)
 
             count += 1
 
-            logging.info(f'Adding following roles to {member.mention}: ' + role.name)
-            await interaction.channel.send(f"{member.mention} heeft genade ontvangen!")
+            #logging.info(f'Adding following roles to {member.mention}: ' + role.name)
+            #await interaction.channel.send(f"{member.mention} heeft genade ontvangen!")
             await asyncio.sleep(0.5)
 
         end_time = time.time()
