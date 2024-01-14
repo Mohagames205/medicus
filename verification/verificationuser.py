@@ -63,6 +63,9 @@ class PartialStudent:
         await member.remove_roles(role)
         await self.replace_verification_roles(member)
 
+        if member.get_role(1196200228580237372):
+            await member.remove_roles(member.get_role(1196200228580237372))
+
         await cur.execute('INSERT INTO verified_users (`user_id`, `email`) values(?, ?)',
                           (member.id, self.email))
         await con.commit()
