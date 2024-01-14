@@ -410,7 +410,7 @@ class VerificationModule(commands.Cog):
             await self.cur.execute('INSERT INTO graced_users (`user_id`) values(?)', (member.id,))
             await self.con.commit()
 
-            await member.add_roles(role)
+            #await member.add_roles(role)
 
             count += 1
 
