@@ -379,8 +379,65 @@ class VerificationModule(commands.Cog):
         await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal")
         await VerificationModule.logger.on_ask_question(interaction.user, question, message)
 
-    @commands.Cog.listener()
-    async def on_member_join(self, member: discord.Member):
+
+
+    @app_commands.command(name="grace_period", description="Put all unverified users in the grace period phase")
+    async def grace_period(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if interaction.user.id != 326311622194888704:
+            await interaction.followup.send("You are not Mohamed, get out!")
+            return
+
+        role = interaction.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID')))
+
+        count = 0
+        unverified_count = 0
+        begin_time = time.time()
+
+        for member in interaction.guild.members:
+
+            # user already has the unverified role, so skip them
+            if member.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))):
+                unverified_count += 1
+                continue
+
+            # user is verified, so skip them
+            if await verificationuser.Student.from_discord_uid(member.id):
+                continue
+
+
+
+            await self.cur.execute('INSERT INTO graced_users (`user_id`) values(?)', (member.id,))
+            await self.con.commit()
+
+            await member.add_roles(role)
+
+            count += 1
+
+            logging.info(f'Adding following roles to {member.mention}: ' + role.name)
+            await interaction.channel.send(f"{member.mention} heeft genade ontvangen!")
+            await asyncio.sleep(0.5)
+
+        end_time = time.time()
+
+        embed = discord.Embed(
+            title="ALLE ROLLEN ZIJN INGESTELD (normaal gezien)",
+            description="james",
+            color=discord.Color.yellow()
+        )
+
+
+        embed.add_field(name="Ongeverifieerd (hebben geen toegang)", value=f"{unverified_count}")
+        embed.add_field(name="Illegalen (hebben wel toegang)", value=f"{count}")
+        embed.add_field(name="Duratie", value=f"{end_time - begin_time} seconden")
+
+        await interaction.channel.send(embed=embed)
+
+
+
+
+    @commands.Cog.listener('verified_join')
+    async def on_verified_join(self, member: discord.Member):
         channel = await member.guild.fetch_channel(int(os.getenv("WELCOME_CHANNEL")))
         if channel is not None:
             await channel.send(f'Welkom {member.mention}!! 🎊.')
