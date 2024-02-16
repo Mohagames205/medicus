@@ -12,6 +12,8 @@ from discord.ext import commands
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
+
+import db.connection_manager
 from verification import verificationmodal
 from verification import verificationuser
 from verification.verification_logger import VerificationLogger
@@ -190,6 +192,39 @@ class VerificationModule(commands.Cog):
             return
 
         await interaction.followup.send("Deze persoon is waarschijnlijk niet geverifieerd.")
+
+    @app_commands.command()
+    async def lookup(self, interaction: discord.Interaction, email: str):
+        await interaction.response.defer()
+
+        cm = db.connection_manager.ConnectionManager
+        cur = cm.cur
+        conn = cm.con
+
+        await cur.execute('SELECT user_id FROM verified_users WHERE `email` = ?', (email,))
+        result = await cur.fetchone()
+
+        if not result:
+            await interaction.followup.send("Deze persoon zit niet in de server of is niet geverifieerd.")
+
+        embed = discord.Embed(
+            title="Reverse Lookup",
+            description=f"Meer informatie over `{email}`",
+            color=discord.Color.blue()
+        )
+
+        embed.add_field(name="Discord",
+                        value=f"<@{result['user_id']}>",
+                        inline=False)
+
+        await interaction.followup.send(embed=embed)
+        return
+
+
+
+
+
+
 
     @app_commands.command()
     async def kick(self, int: discord.Interaction, member: discord.Member, reason: str = "", unverify: bool = False):
