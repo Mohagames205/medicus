@@ -251,12 +251,12 @@ class VerificationModule(commands.Cog):
                          after.get_role(role.id)]
                 await after.remove_roles(*roles)
 
-
     @app_commands.command(name="generatepool")
     async def generate_pool(self, interaction: discord.Interaction):
         pass
 
-    @app_commands.command(name='restore_unverified_status', description='Internal command, do not use if your name is not Mohamed!')
+    @app_commands.command(name='restore_unverified_status',
+                          description='Internal command, do not use if your name is not Mohamed!')
     async def fix_roles(self, interaction: discord.Interaction):
         await interaction.response.defer()
         if interaction.user.id != 326311622194888704:
@@ -379,56 +379,21 @@ class VerificationModule(commands.Cog):
         await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal")
         await VerificationModule.logger.on_ask_question(interaction.user, question, message)
 
+    @app_commands.command(name="whisper", description="Stel je vraag anoniem")
+    async def whisper(self, interaction: discord.Interaction, member: discord.Member, message: str):
 
-
-    @app_commands.command(name="grace_period", description="Put all unverified users in the grace period phase")
-    async def grace_period(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        if interaction.user.id != 326311622194888704:
-            await interaction.followup.send("You are not Mohamed, get out!")
-            return
-
-        role = interaction.guild.get_role(1196200228580237372)
-
-        count = 0
-        unverified_count = 0
-        begin_time = time.time()
-
-        for member in interaction.guild.members:
-
-            # user already has the unverified role, so skip them
-            if member.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))):
-                unverified_count += 1
-                continue
-
-            # user is verified, so skip them
-            if await verificationuser.Student.from_discord_uid(member.id):
-                continue
-
-            await member.add_roles(role)
-
-            count += 1
-
-            #logging.info(f'Adding following roles to {member.mention}: ' + role.name)
-            #await interaction.channel.send(f"{member.mention} heeft genade ontvangen!")
-            await asyncio.sleep(0.5)
-
-        end_time = time.time()
+        await interaction.response.defer(ephemeral=True)
 
         embed = discord.Embed(
-            title="ALLE ROLLEN ZIJN INGESTELD (normaal gezien)",
-            description="james",
-            color=discord.Color.yellow()
+            title=f"⚠ Bericht van moderator",
+            description=f"{message}",
+            colour=discord.Color.blue(),
         )
 
+        embed.set_footer(text=f"GNK discord")
 
-        embed.add_field(name="Ongeverifieerd (hebben geen toegang)", value=f"{unverified_count}")
-        embed.add_field(name="Illegalen (hebben wel toegang)", value=f"{count}")
-        embed.add_field(name="Duratie", value=f"{end_time - begin_time} seconden")
-
-        await interaction.channel.send(embed=embed)
-
-
+        message = await member.send(content=f"U heeft een bericht ontvangen van {interaction.user.mention}", embed=embed)
+        await interaction.followup.send("Je bericht is succesvol verzonden!")
 
 
     @commands.Cog.listener('verified_join')
