@@ -136,7 +136,7 @@ class VerificationModule(commands.Cog):
             embed = discord.Embed(
                 title="Succesvol geverifieerd",
                 description="Je bent succesvol geverifieerd als student **Bachelor Geneeskunde** aan de **KU Leuven.**",
-                color=discord.Color.from_rgb(82, 189, 236)
+                color=discord.Color.from_rgb(82, 189, 236),
             )
 
             await member.send(embed=embed)
@@ -289,115 +289,6 @@ class VerificationModule(commands.Cog):
     @app_commands.command(name="generatepool")
     async def generate_pool(self, interaction: discord.Interaction):
         pass
-
-    @app_commands.command(name='restore_unverified_status',
-                          description='Internal command, do not use if your name is not Mohamed!')
-    async def fix_roles(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        if interaction.user.id != 326311622194888704:
-            await interaction.followup.send("You are not Mohamed, get out!")
-            return
-
-        await interaction.followup.send("OK")
-        roles_added = 0
-        members_reviewed = 0
-
-        begin_time = time.time()
-
-        for member in interaction.guild.members:
-
-            # member doesn't have the 'not verified' role, so skip them
-            if member.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))):
-                continue
-
-            # student should not be verified to proceed
-            student = await verificationuser.Student.from_discord_uid(member.id)
-            if student is not None:
-                continue
-
-            members_reviewed += 1
-
-            replaceable_roles = VerificationModule.replaceable_roles
-            roles_inverted = dict((str(v), str(k)) for k, v in replaceable_roles.items())
-
-            roles_to_add = [member.guild.get_role(int(roles_inverted[str(role.id)])) for role in member.roles if
-                            role.id in list(replaceable_roles.values())]
-
-            await member.add_roles(*roles_to_add)
-
-            roles_added += len(roles_to_add)
-
-            logging.info(f'Adding following roles to {member.mention}: ' + ', '.join(
-                [role.name for role in roles_to_add if role]))
-            await asyncio.sleep(0.5)
-
-        end_time = time.time()
-
-        embed = discord.Embed(
-            title="ALLE ROLLEN ZIJN INGESTELD (normaal gezien)",
-            description="OK",
-            color=discord.Color.yellow()
-        )
-
-        embed.add_field(name="Aantal rollen toegevoegd", value=f"{roles_added}")
-        embed.add_field(name="Aantal leden aangepast", value=f"{members_reviewed}")
-        embed.add_field(name="Duratie", value=f"{end_time - begin_time} seconden")
-
-        await interaction.channel.send(embed=embed)
-
-    @app_commands.command(name='fixroles', description='Internal command, do not use if your name is not Mohamed!')
-    async def fix_roles(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        if interaction.user.id != 326311622194888704:
-            await interaction.followup.send("You are not Mohamed, get out!")
-            return
-
-        await interaction.followup.send("OK")
-        roles_added = 0
-        members_reviewed = 0
-
-        begin_time = time.time()
-
-        for member in interaction.guild.members:
-
-            # member doesn't have the 'not verified' role, so skip them
-            if member.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))):
-                continue
-
-            # student should not be verified to proceed
-            student = await verificationuser.Student.from_discord_uid(member.id)
-            if student is not None:
-                continue
-
-            members_reviewed += 1
-
-            replaceable_roles = VerificationModule.replaceable_roles
-            roles_inverted = dict((str(v), str(k)) for k, v in replaceable_roles.items())
-
-            roles_to_add = [member.guild.get_role(int(roles_inverted[str(role.id)])) for role in member.roles if
-                            role.id in list(replaceable_roles.values())]
-
-            await member.add_roles(*roles_to_add)
-
-            roles_added += len(roles_to_add)
-
-            logging.info(f'Adding following roles to {member.mention}: ' + ', '.join(
-                [role.name for role in roles_to_add if role]))
-            await asyncio.sleep(0.5)
-
-        end_time = time.time()
-
-        embed = discord.Embed(
-            title="ALLE ROLLEN ZIJN INGESTELD (normaal gezien)",
-            description="OK",
-            color=discord.Color.yellow()
-        )
-
-        embed.add_field(name="Aantal rollen toegevoegd", value=f"{roles_added}")
-        embed.add_field(name="Aantal leden aangepast", value=f"{members_reviewed}")
-        embed.add_field(name="Duratie", value=f"{end_time - begin_time} seconden")
-
-        await interaction.channel.send(embed=embed)
 
     @app_commands.command(name="anonymous", description="Stel je vraag anoniem")
     async def ask_anonymous(self, interaction: discord.Interaction, question: str):
