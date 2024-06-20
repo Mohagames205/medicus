@@ -82,5 +82,5 @@ async def initialise_db():
     return con
 
 
-client.run(os.getenv("token"))
+client.run(os.getenv("TOKEN"))
 
