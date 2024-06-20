@@ -6,3 +6,4 @@ arrow
 ics
 sendgrid
 gitpython
+discord.py[voice]
