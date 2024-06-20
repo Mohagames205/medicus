@@ -64,6 +64,10 @@ class VerificationLogger:
             VerificationField("E-mail", student.email)
         ]
 
+        channel = await member.guild.fetch_channel(int(os.getenv("WELCOME_CHANNEL")))
+        if channel is not None:
+            await channel.send(f'Welkom {member.mention} in de geneeskunde Discord server!! 🎊.')
+
         await self.broadcast_info(f"{member.mention} is geverifieerd als:", fields=fields,
                                   title="Nieuw lid geverifieerd")
 
