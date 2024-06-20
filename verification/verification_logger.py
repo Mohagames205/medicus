@@ -2,6 +2,7 @@ import logging
 import os
 
 import discord
+import git
 
 from verification import verificationuser
 
@@ -24,7 +25,9 @@ class VerificationLogger:
 
     async def enable(self):
         if os.getenv("ENVIRONMENT") != "dev":
-            await self.broadcast_info("Verification logger has been enabled")
+            repo = git.Repo(search_parent_directories=True)
+            sha = repo.head.object.hexsha
+            await self.broadcast_info(f"Medicus is opgestart en runt op branch {sha}")
 
     async def send_embed(self, title: str, message: str, fields=None, color: discord.Color = discord.Color.blue(),
                          external_message: str = ""):
