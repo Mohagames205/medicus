@@ -34,7 +34,7 @@ async def on_ready():
     con = await initialise_db()
 
     await client.add_cog(VerificationModule(client, con))
-    #await client.add_cog(ScheduleModule(client, con))
+    await client.add_cog(ScheduleModule(client, con))
 
     for guild in client.guilds:
         tree.copy_global_to(guild=discord.Object(id=guild.id))

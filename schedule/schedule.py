@@ -135,21 +135,6 @@ class ScheduleModule(commands.Cog):
         except discord.errors.NotFound:
             logging.warning("Message does not exist...")
 
-    @app_commands.command(name="anonymous", description="Stel je vraag anoniem")
-    async def ask_anonymous(self, interaction: discord.Interaction, question: str):
-
-        await interaction.response.defer(ephemeral=True)
-
-        embed = discord.Embed(
-            title="Anonieme vraag",
-            description=f"{question}",
-            colour=discord.Color.purple()
-        )
-
-        logging.info(f"{interaction.user.id} asked following question: {question}")
-        await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal")
-        await interaction.channel.send(embed=embed)
-
     @tasks.loop(seconds=60)
     async def check_ical(self):
         for guild in self.bot.guilds:
