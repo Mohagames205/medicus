@@ -142,6 +142,35 @@ class VerificationModule(commands.Cog):
             await member.send(embed=embed)
             await int.followup.send(f"{member.mention} is succesvol geverifieerd!")
 
+
+    @app_commands.command()
+    async def unverify_email(self, interaction: discord.Interaction, email: str):
+        await interaction.response.defer()
+
+        student = await verificationuser.Student.get_by_email(email)
+
+        if not student:
+            await interaction.followup.send(f'Er bestaat geen gebruiker met **email** {email}.')
+            return
+
+        await student.unverify()
+
+        # check if the user account still exists
+        member = interaction.guild.get_member(student.discord_uid)
+        if not member:
+            await interaction.followup.send(f'De verificatiestatus van dit e-mailadres is ingetrokken, maar de Discord gebruiker geassocieerd met dit e-mailadres bestaat niet meer.')
+            return
+
+        replaceable_roles = VerificationModule.replaceable_roles
+        roles_to_remove = [member.guild.get_role(replaceable_roles[str(role.id)]) for role in member.roles if
+                           str(role.id) in list(replaceable_roles.keys())]
+        await member.remove_roles(*roles_to_remove)
+        await member.add_roles(member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))))
+
+        await interaction.followup.send(f'De gebruiker met email {email} is succes gedeverifieerd.')
+
+
+
     @app_commands.command()
     async def force_unverify_user(self, interaction: discord.Interaction, member: discord.Member):
         await interaction.response.defer()
@@ -219,11 +248,6 @@ class VerificationModule(commands.Cog):
 
         await interaction.followup.send(embed=embed)
         return
-
-
-
-
-
 
 
     @app_commands.command()

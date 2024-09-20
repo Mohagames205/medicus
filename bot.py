@@ -19,7 +19,6 @@ if os.getenv("PYTHONASYNCIODEBUG") == "1":
 
 brussels_timezone = pytz.timezone('Europe/Brussels')
 
-
 logging.basicConfig(level=logging.INFO)
 
 intents = discord.Intents.all()
@@ -52,6 +51,7 @@ async def initialise_db():
     con = await aiosqlite.connect("bot.db")
     con.row_factory = sqlite3.Row  # https://stackoverflow.com/questions/3300464/how-can-i-get-dict-from-sqlite-query
     cur = await con.cursor()
+
     await cur.execute(
         'CREATE TABLE IF NOT EXISTS subscribed_messages (id INTEGER PRIMARY KEY, channel_id INTEGER, message_id INTEGER, '
         'guild_id INTEGER, phase INTEGER);')
