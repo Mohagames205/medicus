@@ -198,10 +198,6 @@ class VerificationModule(commands.Cog):
         return result[0] > 0
 
     @app_commands.command()
-    async def fix_roles(self, interaction: discord.Interaction):
-
-
-    @app_commands.command()
     async def whois(self, interaction: discord.Interaction, member: discord.Member):
         await interaction.response.defer()
 
