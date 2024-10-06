@@ -292,7 +292,7 @@ class VerificationModule(commands.Cog):
         return subscribed_roles
 
     @app_commands.command()
-    async def fix_mess(self, interaction: discord.Interaction):
+    async def sync_roles(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
         for member in interaction.guild.members:
@@ -313,12 +313,17 @@ class VerificationModule(commands.Cog):
 
             if roles_to_add: await interaction.channel.send(
                 f"Rollen toe te voegen bij {member.mention}" + ", ".join([role.name for role in roles_to_add]))
+
+            await member.add_roles(*roles_to_add)
+
             if roles_to_remove: await interaction.channel.send(
                 f"Rollen te verwijderen bij {member.mention}" + ", ".join([role.name for role in roles_to_remove]))
 
-            print(f"{member.name}: {roles_to_add}")
+            await member.remove_roles(*roles_to_remove)
 
-            print(student.email)
+            await asyncio.sleep(1)
+
+        await interaction.followup.send("DONE")
 
     @commands.Cog.listener('on_member_update')
     async def on_role_update(self, before: discord.Member, after: discord.Member):
