@@ -321,8 +321,6 @@ class VerificationModule(commands.Cog):
 
             await member.remove_roles(*roles_to_remove)
 
-            await asyncio.sleep(1)
-
         await interaction.followup.send("DONE")
 
     @commands.Cog.listener('on_member_update')
