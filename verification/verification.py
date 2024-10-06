@@ -12,7 +12,6 @@ from discord.ext import commands
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-
 import db.connection_manager
 from verification import verificationmodal
 from verification import verificationuser
@@ -142,7 +141,6 @@ class VerificationModule(commands.Cog):
             await member.send(embed=embed)
             await int.followup.send(f"{member.mention} is succesvol geverifieerd!")
 
-
     @app_commands.command()
     async def unverify_email(self, interaction: discord.Interaction, email: str):
         await interaction.response.defer()
@@ -158,7 +156,8 @@ class VerificationModule(commands.Cog):
         # check if the user account still exists
         member = interaction.guild.get_member(student.discord_uid)
         if not member:
-            await interaction.followup.send(f'De verificatiestatus van dit e-mailadres is ingetrokken, maar de Discord gebruiker geassocieerd met dit e-mailadres bestaat niet meer.')
+            await interaction.followup.send(
+                f'De verificatiestatus van dit e-mailadres is ingetrokken, maar de Discord gebruiker geassocieerd met dit e-mailadres bestaat niet meer.')
             return
 
         replaceable_roles = VerificationModule.replaceable_roles
@@ -168,8 +167,6 @@ class VerificationModule(commands.Cog):
         await member.add_roles(member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID'))))
 
         await interaction.followup.send(f'De gebruiker met email {email} is succes gedeverifieerd.')
-
-
 
     @app_commands.command()
     async def force_unverify_user(self, interaction: discord.Interaction, member: discord.Member):
@@ -249,7 +246,6 @@ class VerificationModule(commands.Cog):
         await interaction.followup.send(embed=embed)
         return
 
-
     @app_commands.command()
     async def kick(self, int: discord.Interaction, member: discord.Member, reason: str = "", unverify: bool = False):
 
@@ -295,6 +291,30 @@ class VerificationModule(commands.Cog):
 
         return subscribed_roles
 
+    @app_commands.command()
+    async def fix_mess(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        for member in interaction.guild.members:
+            student = await verificationuser.Student.from_discord_uid(member.id)
+
+            if not student:
+                continue
+
+            roles = member.roles
+
+            roles_to_add = [member.guild.get_role(self.replaceable_roles[str(role.id)]) for role in roles if
+                            str(role.id) in list(self.replaceable_roles.keys()) and not member.get_role(self.replaceable_roles[str(role.id)])]
+
+            roles_to_remove = [role for role in roles if role.id in list(self.replaceable_roles.values()) and not member.get_role(int({str(v): k for k, v in self.replaceable_roles.items()}[str(role.id)]))]
+
+            await interaction.channel.send(f"Rollen toe te voegen bij {member.mention}" + ", ".join([role.name for role in roles_to_add]))
+            await interaction.channel.send(f"Rollen te verwijderen bij {member.mention}" + ", ".join([role.name for role in roles_to_remove]))
+
+            print(f"{member.name}: {roles_to_add}")
+
+            print(student.email)
+
     @commands.Cog.listener('on_member_update')
     async def on_role_update(self, before: discord.Member, after: discord.Member):
         student = await verificationuser.Student.from_discord_uid(after.id)
@@ -325,8 +345,6 @@ class VerificationModule(commands.Cog):
             print(f"Added roles: {sync_roles_to_add if added_roles else 'None'}")
             print(f"Removed roles: {sync_roles_to_remove if removed_roles else 'None'}")
             print("Role update processed successfully.")
-
-
 
     @app_commands.command(name="generatepool")
     async def generate_pool(self, interaction: discord.Interaction):
@@ -360,9 +378,9 @@ class VerificationModule(commands.Cog):
 
         embed.set_footer(text=f"GNK discord")
 
-        message = await member.send(content=f"U heeft een bericht ontvangen van {interaction.user.mention}", embed=embed)
+        message = await member.send(content=f"U heeft een bericht ontvangen van {interaction.user.mention}",
+                                    embed=embed)
         await interaction.followup.send("Je bericht is succesvol verzonden!")
-
 
     @commands.Cog.listener('verified_join')
     async def on_verified_join(self, member: discord.Member):
