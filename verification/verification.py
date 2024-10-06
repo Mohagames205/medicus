@@ -135,7 +135,7 @@ class VerificationModule(commands.Cog):
 
             embed = discord.Embed(
                 title="Succesvol geverifieerd",
-                description="Je bent succesvol geverifieerd als student **Bachelor Geneeskunde** aan de **KU Leuven.**",
+                description="Je bent succesvol geverifieerd als student **Geneeskunde** aan de **KU Leuven.**",
                 color=discord.Color.from_rgb(82, 189, 236),
             )
 
@@ -275,16 +275,34 @@ class VerificationModule(commands.Cog):
     async def on_role_update(self, before: discord.Member, after: discord.Member):
         student = await verificationuser.Student.from_discord_uid(after.id)
         if student:
+            before_roles = set(before.roles)
+            after_roles = set(after.roles)
 
-            if len(before.roles) < len(after.roles):
+            added_roles = after_roles - before_roles
+            removed_roles = before_roles - after_roles
+
+            if added_roles:
+                sync_roles_to_add = [role for role in self.get_sync_roles(before.roles, after.roles, after)
+                                     if after.get_role(role.id) is None]
+
                 roles = [role for role in self.get_sync_roles(before.roles, after.roles, after) if
                          after.get_role(role.id) is None]
                 await after.add_roles(*roles)
 
-            if len(before.roles) > len(after.roles):
-                roles = [role for role in self.get_sync_roles(after.roles, before.roles, after) if
-                         after.get_role(role.id)]
-                await after.remove_roles(*roles)
+                if sync_roles_to_add:
+                    await after.add_roles(*sync_roles_to_add)
+
+            if removed_roles:
+                sync_roles_to_remove = [role for role in self.get_sync_roles(after.roles, before.roles, after)
+                                        if after.get_role(role.id)]
+                if sync_roles_to_remove:
+                    await after.remove_roles(*sync_roles_to_remove)
+
+            print(f"Added roles: {sync_roles_to_add if added_roles else 'None'}")
+            print(f"Removed roles: {sync_roles_to_remove if removed_roles else 'None'}")
+            print("Role update processed successfully.")
+
+
 
     @app_commands.command(name="generatepool")
     async def generate_pool(self, interaction: discord.Interaction):
