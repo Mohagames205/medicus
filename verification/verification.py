@@ -304,12 +304,17 @@ class VerificationModule(commands.Cog):
             roles = member.roles
 
             roles_to_add = [member.guild.get_role(self.replaceable_roles[str(role.id)]) for role in roles if
-                            str(role.id) in list(self.replaceable_roles.keys()) and not member.get_role(self.replaceable_roles[str(role.id)])]
+                            str(role.id) in list(self.replaceable_roles.keys()) and not member.get_role(
+                                self.replaceable_roles[str(role.id)])]
 
-            roles_to_remove = [role for role in roles if role.id in list(self.replaceable_roles.values()) and not member.get_role(int({str(v): k for k, v in self.replaceable_roles.items()}[str(role.id)]))]
+            roles_to_remove = [role for role in roles if
+                               role.id in list(self.replaceable_roles.values()) and not member.get_role(
+                                   int({str(v): k for k, v in self.replaceable_roles.items()}[str(role.id)]))]
 
-            await interaction.channel.send(f"Rollen toe te voegen bij {member.mention}" + ", ".join([role.name for role in roles_to_add]))
-            await interaction.channel.send(f"Rollen te verwijderen bij {member.mention}" + ", ".join([role.name for role in roles_to_remove]))
+            if roles_to_add: await interaction.channel.send(
+                f"Rollen toe te voegen bij {member.mention}" + ", ".join([role.name for role in roles_to_add]))
+            if roles_to_remove: await interaction.channel.send(
+                f"Rollen te verwijderen bij {member.mention}" + ", ".join([role.name for role in roles_to_remove]))
 
             print(f"{member.name}: {roles_to_add}")
 
