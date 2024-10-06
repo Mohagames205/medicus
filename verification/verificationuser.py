@@ -122,6 +122,15 @@ class Student(PartialStudent):
 
         return Student(result[0], uid) if result else None
 
+    @staticmethod
+    async def get_by_email(email: str):
+        cur, con = Student.db()
+
+        await cur.execute('SELECT user_id FROM verified_users WHERE `email` = ?', (email,))
+        result = await cur.fetchone()
+
+        return Student(email, result[0]) if result else None
+
     async def unverify(self):
         cur, con = Student.db()
 
