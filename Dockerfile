@@ -1,10 +1,14 @@
-FROM python:3.9
+FROM python:3.12
 
 LABEL Maintainer="mootje.be"
 
 WORKDIR /home
 
+COPY requirements.txt /tmp/requirements.txt
+
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir aiohttp discord.py[voice] ics python-dotenv pytz
+    pip install --no-cache-dir -r /tmp/requirements.txt
+
+RUN git config --global --add safe.directory /home
 
 CMD [ "python", "./bot.py"]

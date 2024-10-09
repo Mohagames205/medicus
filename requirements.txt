@@ -1,0 +1,9 @@
+aiosqlite
+pytz
+python-dotenv
+aiohttp
+arrow
+ics
+sendgrid
+gitpython
+discord.py[voice]
