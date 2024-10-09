@@ -82,8 +82,8 @@ class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
                 view=view, ephemeral=True)
         else:
             embed = discord.Embed(
-                title="Geen student bachelor geneeskunde",
-                description="Je bent geen (bachelor) geneeskunde student aan de KU Leuven. Indien je denkt dat dit een vergissing is, neem dan contact op met een van de beheerders of moderators.",
+                title="Geen student geneeskunde",
+                description="Je bent geen geneeskunde student aan de KU Leuven. Indien je denkt dat dit een vergissing is, neem dan contact op met een van de beheerders of moderators.",
                 color=discord.Color.red()
             )
 
@@ -114,7 +114,7 @@ class VerificationModal(ui.Modal, title='Verificatiecode studentenmail'):
 
             embed = discord.Embed(
                 title="Succesvol geverifieerd",
-                description="Je bent succesvol geverifieerd als student **Bachelor Geneeskunde** aan de **KU Leuven.**",
+                description="Je bent succesvol geverifieerd als student **Geneeskunde** aan de **KU Leuven.**",
                 color=discord.Color.from_rgb(82, 189, 236)
             )
 
