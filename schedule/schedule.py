@@ -100,7 +100,6 @@ class ScheduleModule(commands.Cog):
 
     async def update_embed(self, embed_message, course_event: CourseEvent):
         ongoing_event = course_event.event
-        duration_str = str(ongoing_event.duration)
 
         if course_event.status == CourseEvent.CURRENT:
             title = "🎯  |  Huidig hoorcollege"
@@ -120,6 +119,7 @@ class ScheduleModule(commands.Cog):
         embed.add_field(name="Hoorcollege", value=f"{ongoing_event.name}")
 
         if course_event.status != course_event.NO_EVENT:
+            duration_str = str(ongoing_event.duration)
             hours, minutes, _ = duration_str.split(":")
             formatted_duration = f"{hours}u{minutes}m"
 
