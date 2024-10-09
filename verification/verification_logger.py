@@ -27,7 +27,7 @@ class VerificationLogger:
         if os.getenv("ENVIRONMENT") != "dev":
             repo = git.Repo(search_parent_directories=True)
             sha = repo.head.object.hexsha
-            await self.broadcast_info(f"Medicus is opgestart en runt op commit {sha}[{repo.active_branch}]")
+            await self.broadcast_info(f"Medicus is opgestart en runt op commit [{sha}[{repo.active_branch}]](https://github.com/mohagames205/medicus/commit/{sha})")
 
     async def send_embed(self, title: str, message: str, fields=None, color: discord.Color = discord.Color.blue(),
                          external_message: str = ""):
