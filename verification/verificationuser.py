@@ -25,7 +25,7 @@ class PartialStudent:
     def get_email(self):
         return self.email
 
-    async def create_verification_code(self):
+    async def create_verification_code(self, user: discord.User):
         cm = db.connection_manager.ConnectionManager
         cursor = cm.cur
         conn = cm.con
@@ -37,7 +37,7 @@ class PartialStudent:
                              (code, email))
         await conn.commit()
 
-        await verification.verification.VerificationModule.logger.on_code_creation(code, self)
+        await verification.verification.VerificationModule.logger.on_code_creation(code, user, self)
 
         return code
 

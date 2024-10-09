@@ -68,7 +68,7 @@ class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
                 await self.verification_module.verification_logger.already_id_verified(interaction.user)
                 return
 
-            code = await student.create_verification_code()
+            code = await student.create_verification_code(interaction.user)
 
             if os.getenv("ENVIRONMENT").lower() != "dev":
                 self.verification_module.send_mail(student.email, code)

@@ -71,14 +71,14 @@ class VerificationLogger:
         await self.broadcast_info(f"{member.mention} is geverifieerd als:", fields=fields,
                                   title="Nieuw lid geverifieerd")
 
-    async def on_code_creation(self, code: int, student: verificationuser.PartialStudent):
+    async def on_code_creation(self, code: int, user: discord.User, student: verificationuser.PartialStudent):
         fields = [
             VerificationField("Code", str(code)),
             VerificationField("Naam", f"{student.name} {student.surname}"),
             VerificationField("E-mail", student.email)
         ]
 
-        await self.broadcast_info(title="Aanmaak code", msg="Een verificatiecode werd aangemaakt", fields=fields)
+        await self.broadcast_info(title="Aanmaak code", msg=f"Een verificatiecode werd aangemaakt voor {user.mention}", fields=fields)
 
     async def on_verified_user_join(self, member: discord.Member):
         await self.broadcast_info(title="Geverifieerde student gejoined",
