@@ -85,8 +85,8 @@ class ScheduleModule(commands.Cog):
                 if event.name in self.blacklist:
                     continue
 
-                event_begin = Arrow.fromdatetime(event.begin, tzinfo=brussels_timezone)
-                event_end = Arrow.fromdatetime(event.end, tzinfo=brussels_timezone)
+                event_begin = Arrow.fromdatetime(event.begin)
+                event_end = Arrow.fromdatetime(event.end)
 
                 if event_begin <= time <= event_end:
                     return CourseEvent(event, CourseEvent.CURRENT)
@@ -135,7 +135,7 @@ class ScheduleModule(commands.Cog):
         except discord.errors.NotFound:
             logging.warning("Message does not exist...")
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=90)
     async def check_ical(self):
         for guild in self.bot.guilds:
 
@@ -143,7 +143,7 @@ class ScheduleModule(commands.Cog):
                 message = embed_message["message"]
                 phase = embed_message["phase"]
 
-                now = Arrow.now(tzinfo=brussels_timezone)
+                now = Arrow.now()
 
                 logging.info(f"[{now}][Phase {phase}][{guild.id}][{message.channel.id}][{message.id}] Updating embed")
 
