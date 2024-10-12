@@ -88,7 +88,7 @@ class VerificationModule(commands.Cog):
                         "1. **Druk** op de onderstaande knop\n"
                         "2. Je ontvangt een e-mail op je studentenmail met een **code**.\n"
                         "3. Druk vervolgens op de knop **'code ingeven'** en geef de code in.\n\n"
-                        "⚠ De code durft soms eens in de spambox te vallen. Check dus zeker je spambox!",
+                        "⚠ De code durft soms eens in de spambox te belanden. Check dus zeker je spambox!",
             color=discord.Color.blue()
         )
 
