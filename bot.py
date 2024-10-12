@@ -40,7 +40,7 @@ async def on_ready():
         await tree.sync(guild=discord.Object(id=guild.id))
 
     game = discord.Game("mootje.be")
-    await client.change_presence(status=discord.Status.idle, activity=game)
+    await client.change_presence(status=discord.Status.dnd, activity=game)
 
     await client.get_cog("verification").refresh_messages()
 
