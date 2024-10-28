@@ -182,6 +182,10 @@ class ScheduleModule(commands.Cog):
             guild = self.bot.get_guild(result["guild_id"])
             channel = guild.get_channel(result["channel_id"])
 
+            if not channel:
+                await self.unregister_message(result["message_id"])
+                continue
+
             try:
                 message = await channel.get_partial_message(result["message_id"]).fetch()
             except discord.errors.NotFound:
