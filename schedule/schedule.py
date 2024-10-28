@@ -184,6 +184,7 @@ class ScheduleModule(commands.Cog):
 
             if not channel:
                 await self.unregister_message(result["message_id"])
+                logging.warning(f"Unregistering message in non-existent channel with ID: {result['channel_id']}")
                 continue
 
             try:
