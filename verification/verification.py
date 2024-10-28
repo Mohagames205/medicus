@@ -374,7 +374,7 @@ class VerificationModule(commands.Cog):
         await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal")
         await VerificationModule.logger.on_ask_question(interaction.user, question, message)
 
-    @app_commands.command(name="whisper", description="Stel je vraag anoniem")
+    @app_commands.command(name="whisper", description="Fluister een bericht naar een ander lid")
     async def whisper(self, interaction: discord.Interaction, member: discord.Member, message: str):
 
         await interaction.response.defer(ephemeral=True)
