@@ -134,6 +134,8 @@ class ScheduleModule(commands.Cog):
             await embed_message.edit(embed=embed)
         except discord.errors.NotFound:
             logging.warning("Message does not exist...")
+        except discord.errors.DiscordServerError as e:
+            logging.error(e)
 
     @tasks.loop(seconds=90)
     async def check_ical(self):
