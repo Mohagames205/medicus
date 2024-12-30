@@ -94,7 +94,7 @@ class VerificationLogger:
             str_fields += f"\n {str(field)}"
 
         logging.info(msg + str_fields)
-        await self.send_embed(external_message=f"<@&{os.getenv('MODERATOR_CHANNEL')}>", message=msg, fields=fields, title=title,
+        await self.send_embed(external_message=f"<@&{os.getenv('MODERATOR_ROLE')}>", message=msg, fields=fields, title=title,
                               color=discord.Color.orange())
 
     async def already_id_verified(self, member: discord.Member):
