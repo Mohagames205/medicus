@@ -370,7 +370,8 @@ class VerificationModule(commands.Cog):
             colour=discord.Color.purple()
         )
 
-        ref = interaction.message.reference
+        ref = interaction.message.reference or None
+
         message = await interaction.channel.send(embed=embed, reference=ref)
         await interaction.followup.send("Je vraag is succesvol gesteld in dit kanaal")
         await VerificationModule.logger.on_ask_question(interaction.user, question, message)
