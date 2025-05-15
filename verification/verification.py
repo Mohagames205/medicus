@@ -293,12 +293,6 @@ class VerificationModule(commands.Cog):
         return subscribed_roles
 
     @app_commands.command()
-    async def sendv_email(self, int: discord.Interaction, email: str):
-        await int.response.defer()
-        self.send_mail(email, "123456")
-        await int.followup.send("Email is succesvol verstuurd!")
-
-    @app_commands.command()
     async def sync_roles(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
