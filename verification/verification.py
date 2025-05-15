@@ -110,7 +110,7 @@ class VerificationModule(commands.Cog):
             html = file.read()
 
         message = Mail(
-            from_email='medicus@mootje.be',
+            from_email='medicus@gnkdiscord.be',
             to_emails=email,
             subject='Verificatie GNK Discord',
             html_content=html.replace("{{CODE}}", str(code)))
