@@ -44,7 +44,7 @@ class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
             verified_student = await student.full()
 
             if verified_student:
-                await verification.verification.VerificationModule.logger.already_email_verified(interaction.user, verified_student)
+                await self.verification_module.logger.already_email_verified(interaction.user, verified_student)
 
                 embed = discord.Embed(
                     title="Verificatie mislukt",
@@ -65,7 +65,7 @@ class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
 
                 await interaction.response.send_message(embed=embed, ephemeral=True)
 
-                await self.verification_module.verification_logger.already_id_verified(interaction.user)
+                await self.verification_module.logger.already_id_verified(interaction.user)
                 return
 
             code = await student.create_verification_code(interaction.user)
