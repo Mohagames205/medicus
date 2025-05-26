@@ -147,4 +147,5 @@ class VerificationLogger:
             VerificationField("E-mail", email),
         ]
         await self.broadcast_warning(title="Geen student gevonden",
+                                     fields=fields,
                                      msg=f"{member.name}{member.mention} kon niet gevalideerd worden als student.")
