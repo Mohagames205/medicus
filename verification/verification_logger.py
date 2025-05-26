@@ -82,7 +82,7 @@ class VerificationLogger:
 
     async def on_verified_user_join(self, member: discord.Member):
         await self.broadcast_info(title="Geverifieerde student gejoined",
-                                  msg=f"{member.mention} was al eerder geverifieerd en heeft automatisch toegang "
+                                  msg=f"{member.mention}({member.name}) was al eerder geverifieerd en heeft automatisch toegang "
                                       f"gekregen.")
 
     async def broadcast_warning(self, msg: str, fields=None, title: str = "❗ Waarschuwing"):
@@ -99,7 +99,7 @@ class VerificationLogger:
 
     async def already_id_verified(self, member: discord.Member):
         await self.broadcast_warning(title="Dubbele verificatie",
-                                     msg=f"{member.mention} is al geverifieerd, maar probeert zich nogmaals te "
+                                     msg=f"{member.mention}({member.name}) is al geverifieerd, maar probeert zich nogmaals te "
                                          f"verifiëren. Mogelijks is hier iets misgelopen?")
 
     async def already_email_verified(self, member: discord.Member, student: verificationuser.Student):
@@ -107,11 +107,11 @@ class VerificationLogger:
         fields = [
             VerificationField("Naam", f"{student.name} {student.surname}"),
             VerificationField("E-mail", student.email),
-            VerificationField("Reeds geverifieerd account", f"<@{student.discord_uid}>")
+            VerificationField("Reeds geverifieerd account", f"<@{student.discord_uid}>({member.name})")
         ]
 
         await self.broadcast_warning(title="Poging tot verificatie ALT",
-                                     msg=f"{member.mention} probeert een ander account te verifiëren, maar is al "
+                                     msg=f"{member.mention}({member.name}) probeert een ander account te verifiëren, maar is al "
                                          f"geverifieerd.",
                                      fields=fields)
 
@@ -148,4 +148,4 @@ class VerificationLogger:
         ]
         await self.broadcast_warning(title="Geen student gevonden",
                                      fields=fields,
-                                     msg=f"{member.name}{member.mention} kon niet gevalideerd worden als student.")
+                                     msg=f"{member.mention}({member.name}) kon niet gevalideerd worden als student.")
