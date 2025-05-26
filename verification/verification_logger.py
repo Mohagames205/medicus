@@ -68,7 +68,7 @@ class VerificationLogger:
         if channel is not None:
             await channel.send(f'Welkom {member.mention} in de geneeskunde Discord server!! 🎊.')
 
-        await self.broadcast_info(f"{member.mention} is geverifieerd als:", fields=fields,
+        await self.broadcast_info(f"{member.mention}({member.name}) is geverifieerd als:", fields=fields,
                                   title="Nieuw lid geverifieerd")
 
     async def on_code_creation(self, code: int, user: discord.User, student: verificationuser.PartialStudent):
@@ -78,7 +78,7 @@ class VerificationLogger:
             VerificationField("E-mail", student.email)
         ]
 
-        await self.broadcast_info(title="Aanmaak code", msg=f"Een verificatiecode werd aangemaakt voor {user.mention}", fields=fields)
+        await self.broadcast_info(title="Aanmaak code", msg=f"Een verificatiecode werd aangemaakt voor {user.mention}{user.name}", fields=fields)
 
     async def on_verified_user_join(self, member: discord.Member):
         await self.broadcast_info(title="Geverifieerde student gejoined",
@@ -120,7 +120,7 @@ class VerificationLogger:
         v_student = await verificationuser.Student.from_discord_uid(victim.id)
 
         fields = [
-            VerificationField("Gekicked door", cause.mention),
+            VerificationField("Gekicked door", f"{cause.mention}({cause.name})"),
             VerificationField("Slachtoffer", f"{victim.mention}({victim.name})"),
             VerificationField("Gedeverifieerd?", "Ja" if unverified else "Neen")
         ]
@@ -140,3 +140,11 @@ class VerificationLogger:
         ]
 
         await self.broadcast_info(title="Anonieme vraag", msg="", fields=fields)
+
+    async def no_student_found(self, member: discord.Member, email: str):
+
+        fields = [
+            VerificationField("E-mail", email),
+        ]
+        await self.broadcast_warning(title="Geen student gevonden",
+                                     msg=f"{member.name}{member.mention} kon niet gevalideerd worden als student.")

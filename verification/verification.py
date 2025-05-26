@@ -206,7 +206,7 @@ class VerificationModule(commands.Cog):
 
             embed = discord.Embed(
                 title="Whois",
-                description=f"Meer informatie over {member.mention}",
+                description=f"Meer informatie over {member.mention}({member.name})",
                 color=discord.Color.blue()
             )
 
