@@ -83,10 +83,11 @@ class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
         else:
             embed = discord.Embed(
                 title="Geen student geneeskunde",
-                description="Je bent geen geneeskunde student aan de KU Leuven. Indien je denkt dat dit een vergissing is, neem dan contact op met een van de beheerders of moderators.",
+                description="Je bent geen geneeskunde student aan de KU Leuven. Indien je denkt dat dit een vergissing is, neem dan contact op met een van de bestuursleden.",
                 color=discord.Color.red()
             )
 
+            await self.verification_module.verification_logger.no_student_found(interaction.user, self.studentmail.value)
             await interaction.followup.send(embed=embed, ephemeral=True)
 
 
