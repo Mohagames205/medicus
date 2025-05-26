@@ -87,7 +87,7 @@ class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
                 color=discord.Color.red()
             )
 
-            await verification.verification.VerificationModule.verification_logger.no_student_found(interaction.user, self.studentmail.value)
+            await self.verification_module.logger.no_student_found(interaction.user, self.studentmail.value)
             await interaction.followup.send(embed=embed, ephemeral=True)
 
 
