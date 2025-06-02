@@ -9,6 +9,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 import db.connection_manager
+from misc import misc
 from schedule.schedule import ScheduleModule
 from verification.verification import VerificationModule
 
@@ -34,6 +35,7 @@ async def on_ready():
 
     await client.add_cog(VerificationModule(client, con))
     await client.add_cog(ScheduleModule(client, con))
+    await client.add_cog(misc.MiscModule(client))
 
     for guild in client.guilds:
         tree.copy_global_to(guild=discord.Object(id=guild.id))
