@@ -123,12 +123,15 @@ class ScheduleModule(commands.Cog):
             hours, minutes, _ = duration_str.split(":")
             formatted_duration = f"{hours}u{minutes}m"
 
+            discord_timestamp = int(ongoing_event.begin.timestamp())
+
             embed.add_field(name="Locatie", value=f"{ongoing_event.location}", inline=False)
             embed.add_field(name="Tijd",
                             value=f"{ongoing_event.begin.to(brussels_timezone).format('HH:mm', 'nl')} - {ongoing_event.end.to(brussels_timezone).format('HH:mm', 'nl')}  |  {ongoing_event.end.format('D MMMM YYYY', 'nl')}",
                             inline=False)
             embed.add_field(name="Duur", value=f"{formatted_duration}", inline=False)
             embed.add_field(name="Beschrijving", value=f"{ongoing_event.description}", inline=False)
+            embed.add_field(name="Resterende tijd", value=f"<t:{discord_timestamp}:R>", inline=False)
 
         try:
             await embed_message.edit(embed=embed)
