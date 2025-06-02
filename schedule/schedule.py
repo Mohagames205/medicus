@@ -127,7 +127,7 @@ class ScheduleModule(commands.Cog):
 
             embed.add_field(name="Locatie", value=f"{ongoing_event.location}", inline=False)
             embed.add_field(name="Tijd",
-                            value=f"{ongoing_event.begin.to(brussels_timezone).format('HH:mm', 'nl')} - {ongoing_event.end.to(brussels_timezone).format('HH:mm', 'nl')}  |  {ongoing_event.end.format('D MMMM YYYY', 'nl')}",
+                            value=f"{ongoing_event.begin.to(brussels_timezone).format('HH:mm', 'nl')} - {ongoing_event.end.to(brussels_timezone).format('HH:mm', 'nl')}  |  {ongoing_event.begin.format('D MMMM YYYY', 'nl')}",
                             inline=False)
             embed.add_field(name="Duur", value=f"{formatted_duration}", inline=False)
             embed.add_field(name="Beschrijving", value=f"{ongoing_event.description}", inline=False)
