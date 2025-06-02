@@ -123,7 +123,7 @@ class ScheduleModule(commands.Cog):
             hours, minutes, _ = duration_str.split(":")
             formatted_duration = f"{hours}u{minutes}m"
 
-            discord_timestamp = int(ongoing_event.begin.timestamp())
+            discord_timestamp = int(ongoing_event.end.timestamp())
 
             embed.add_field(name="Locatie", value=f"{ongoing_event.location}", inline=False)
             embed.add_field(name="Tijd",
