@@ -68,7 +68,7 @@ class PartialStudent:
 
         await cur.execute('INSERT INTO verified_users (`user_id`, `email`) values(?, ?)',
                           (member.id, self.email))
-        await cur.execute('REMOVE FROM verification_codes WHERE `email` = ?',
+        await cur.execute('DELETE FROM verification_codes WHERE `email` = ?',
                           (self.email,))
         await con.commit()
 
