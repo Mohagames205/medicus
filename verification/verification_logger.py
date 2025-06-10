@@ -78,7 +78,7 @@ class VerificationLogger:
             VerificationField("E-mail", student.email)
         ]
 
-        await self.broadcast_info(title="Aanmaak code", msg=f"Een verificatiecode werd aangemaakt voor {user.mention}{user.name}", fields=fields)
+        await self.broadcast_info(title="Aanmaak code", msg=f"Een verificatiecode werd aangemaakt voor {user.mention}({user.name})", fields=fields)
 
     async def on_verified_user_join(self, member: discord.Member):
         await self.broadcast_info(title="Geverifieerde student gejoined",
@@ -107,7 +107,7 @@ class VerificationLogger:
         fields = [
             VerificationField("Naam", f"{student.name} {student.surname}"),
             VerificationField("E-mail", student.email),
-            VerificationField("Reeds geverifieerd account", f"<@{student.discord_uid}>({member.name})")
+            VerificationField("Reeds geverifieerd account", f"<@{student.discord_uid}>({student.name})")
         ]
 
         await self.broadcast_warning(title="Poging tot verificatie ALT",
