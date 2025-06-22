@@ -285,7 +285,7 @@ class VerificationModule(commands.Cog):
         await VerificationModule.logger.on_verified_user_join(member)
         channel = await member.guild.fetch_channel(int(os.getenv("WELCOME_CHANNEL")))
         if channel is not None:
-            await channel.send(f'Welkom {member.mention} in de geneeskunde Discord server!! 🎊.')
+            await channel.send(f'Welkom **terug** {member.mention} in de geneeskunde Discord server!! 🎊.')
 
     def get_sync_roles(self, roles_1, roles_2, member: discord.Member):
         role_diff = set(roles_2) - set(roles_1)
