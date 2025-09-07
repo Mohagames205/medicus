@@ -7,3 +7,4 @@ ics
 sendgrid
 gitpython
 discord.py[voice]
+mailgun

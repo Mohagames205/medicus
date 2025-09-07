@@ -11,6 +11,8 @@ from discord import app_commands
 from discord.ext import commands
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+from mailgun.client import Client
+
 
 import db.connection_manager
 from verification import verificationmodal
@@ -106,22 +108,29 @@ class VerificationModule(commands.Cog):
         await self.con.commit()
 
     def send_mail(self, email, code):
+
+        auth = ("api", os.environ["MAILGUN_API"])
+        client: Client = Client(auth=auth, api_url="https://api.eu.mailgun.net/")
+        domain: str = "gnkdiscord.be"
+
         with open('assets/email.html') as file:
             html = file.read()
 
-        message = Mail(
-            from_email='medicus@gnkdiscord.be',
-            to_emails=email,
-            subject='Verificatie GNK Discord',
-            html_content=html.replace("{{CODE}}", str(code)))
+        html = html.replace("{{CODE}}", str(code))
+
+        data = {
+            "from": os.getenv("MESSAGES_FROM", "medicus@gnkdiscord.be"),
+            "to": email,
+            "subject": "Verificatie GNK Discord",
+            "html": html,
+            "o:tag": "verification"
+        }
         try:
-            sg = SendGridAPIClient(os.getenv("SENDGRID_API"))
-            response = sg.send(message)
-            print(response.status_code)
-            print(response.body)
-            print(response.headers)
+            req = client.messages.create(data=data, domain=domain)
+            print(req.status_code)
+            print(req.json())
         except Exception as e:
-            print(e.message)
+            print(f"Mailgun error: {e}")
 
     @app_commands.command()
     async def force_verify_user(self, int: discord.Interaction, member: discord.Member, email: str, voornaam: str = "",
