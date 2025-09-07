@@ -9,8 +9,6 @@ import aiosqlite
 import discord
 from discord import app_commands
 from discord.ext import commands
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 from mailgun.client import Client
 
 
