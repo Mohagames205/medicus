@@ -63,8 +63,7 @@ class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
                                 "gemeld."
                 )
 
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-
+                await interaction.followup.send(embed=embed, ephemeral=True)
                 await self.verification_module.logger.already_id_verified(interaction.user)
                 return
 
