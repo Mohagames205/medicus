@@ -4,12 +4,14 @@ import json
 import logging
 import os
 import random
+import re
 import time
 import aiosqlite
 import discord
 from discord import app_commands
 from discord.ext import commands
 from mailgun.client import Client
+from typing import Optional
 
 
 import db.connection_manager
@@ -40,6 +42,8 @@ class VerificationModule(commands.Cog):
         self.bot = bot
         self.tree = bot.tree
         self.con = con
+        self.messages_al = []
+        self.alumni_members = []
 
         channel = bot.get_channel(int(os.getenv("REPORTS_CHANNEL")))
         VerificationModule.logger = VerificationLogger(channel)
@@ -195,6 +199,88 @@ class VerificationModule(commands.Cog):
             await interaction.followup.send(f"{member.mention} is succesvol gedeverifieerd!")
         else:
             await interaction.followup.send(f"A sahbe, {member.mention} is niet eens geverifieerd. Rwina!")
+
+    def name_matches(self, registered: str, candidate: str) -> bool:
+        if not registered or not candidate:
+            return False
+        r = registered.lower()
+        c = candidate.lower()
+        return r in c or c in r
+
+    def normalize_localpart(self, email: str) -> str:
+        localpart = email.split("@")[0].lower()
+        return re.sub(r"\d+", "", localpart)
+
+    def find_student_by_name(self, student, current_partials):
+        for ps in current_partials:
+            localpart = ps.get_email().split("@")[0]
+            clean = localpart.replace(".", " ").replace("_", " ").replace("-", " ")
+
+            if (self.name_matches(student.get_firstname(), clean) and
+                    self.name_matches(student.get_lastname(), clean)):
+                return ps
+
+            if self.normalize_localpart(student.get_email()) == self.normalize_localpart(ps.get_email()):
+                return ps
+        return None
+
+    @discord.app_commands.command()
+    async def alumni(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        current_students = await verificationuser.PartialStudent.fetch_all()
+        for student in await verificationuser.Student.fetch_all():
+            found = await verificationuser.PartialStudent.get_by_email(student.email)
+
+            if not found:
+                member: Optional[discord.Member] = interaction.guild.get_member(student.get_discord_uid())
+
+                if not member:
+                    self.messages_al.append(await interaction.channel.send(f"-# {student.email} has left the server, so ignoring ({student.get_discord_uid()})."))
+                    continue
+
+                if member and member.get_role(1157432995981037619):
+                    self.messages_al.append(await interaction.channel.send(f"-# {student.email} is a guest, so ignoring (<@{student.get_discord_uid()}>)"))
+                    continue
+
+                similar = self.find_student_by_name(student, current_students)
+                if similar:
+                    msg = (f"`{student.email}` changed to `{similar.email}` "
+                           f"(<@{student.get_discord_uid()}>)")
+                else:
+                    msg = (f"`{student.email}` is an alumnus "
+                           f"(<@{student.get_discord_uid()}>)")
+
+                    self.alumni_members.append(member)
+
+                self.messages_al.append(await interaction.channel.send(msg))
+                await asyncio.sleep(1)
+
+        await interaction.followup.send("done")
+
+    @app_commands.command()
+    async def give_alumni_roles(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        for member in self.alumni_members:
+            await member.add_roles(interaction.guild.get_role(1421567656221479043))
+            embed = discord.Embed(
+                title="Alumni",
+                description=(
+                    "Volgens onze gegevens ben je geen bachelor- of masterstudent meer aan KU Leuven. "
+                    "Daarom heb je de rol **@alumnus** gekregen op de Geneeskunde KUL Discord-server.\n\n"
+                    "Denk je dat dit niet klopt? Neem dan gerust contact op met een van de bestuursleden."
+                ),
+                color=discord.Color.from_rgb(255, 0, 0)
+            )
+
+            self.messages_al.append(await interaction.channel.send(f"{member.mention} has received the alumni role"))
+
+            await member.send(embed=embed)
+            await asyncio.sleep(1)
+
+        await interaction.channel.delete_messages(self.messages_al)
+        self.messages_al = []
+        await interaction.followup.send("done")
 
     async def is_verified(self, user_id: int):
         await self.cur.execute('SELECT COUNT(*) FROM verified_users WHERE `user_id` = ?', (user_id,))
@@ -364,10 +450,6 @@ class VerificationModule(commands.Cog):
             print(f"Added roles: {sync_roles_to_add if added_roles else 'None'}")
             print(f"Removed roles: {sync_roles_to_remove if removed_roles else 'None'}")
             print("Role update processed successfully.")
-
-    @app_commands.command(name="generatepool")
-    async def generate_pool(self, interaction: discord.Interaction):
-        pass
 
     @app_commands.command(name="anonymous", description="Stel je vraag anoniem")
     async def ask_anonymous(self, interaction: discord.Interaction, question: str):
