@@ -74,10 +74,6 @@ async def initialise_db():
         'INTEGER, message_id INTEGER)'
     )
 
-    await cur.execute(
-        'CREATE TABLE IF NOT EXISTS graced_users (id INTEGER PRIMARY KEY, user_id INTEGER UNIQUE)'
-    )
-
     cm = db.connection_manager.ConnectionManager(con)
     await cm.initialize_cursor()
 
