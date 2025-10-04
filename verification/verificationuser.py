@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 
@@ -54,6 +55,22 @@ class PartialStudent:
                                           user_details["familyName"])
 
             return None
+
+    @staticmethod
+    async def fetch_all():
+        with open("assets/memberships.json") as file:
+            partial_students = []
+            memberships_raw = json.load(file)
+            result = memberships_raw["results"]
+            for user in result:
+                    user_details = user["user"]
+                    try:
+                        partial_students.append(PartialStudent(user_details["emailAddress"], user_details["givenName"],
+                                          user_details["familyName"]))
+                    except:
+                        logging.warning(user_details)
+
+            return partial_students
 
     async def verify(self, member: discord.Member):
         role = member.guild.get_role(int(os.getenv('UNVERIFIED_ROLE_ID')))
@@ -115,6 +132,12 @@ class Student(PartialStudent):
     def get_discord_uid(self):
         return self.discord_uid
 
+    def get_firstname(self):
+        return self.email.split('@')[0].split('.')[0]
+
+    def get_lastname(self):
+        return self.email.split('@')[0].split('.')[1]
+
     @staticmethod
     async def from_discord_uid(uid: int):
         cur, con = Student.db()
@@ -138,6 +161,15 @@ class Student(PartialStudent):
 
         await cur.execute('DELETE FROM verified_users WHERE user_id = ?', (self.discord_uid,))
         await con.commit()
+
+    @staticmethod
+    async def fetch_all():
+        cur, con = Student.db()
+        await cur.execute('SELECT user_id, email FROM verified_users')
+        result = await cur.fetchall()
+
+        return [Student(email, user_id) for user_id, email in result]
+
 
     @staticmethod
     async def from_partial(partial: PartialStudent):
