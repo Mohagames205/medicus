@@ -350,11 +350,6 @@ class VerificationModule(commands.Cog):
         if unverify and student:
             await student.unverify()
 
-        await VerificationModule.logger.on_user_kick(int.user, member, unverify)
-
-        await int.followup.send(
-            f"{member.mention} is gekicked door {int.user.mention} omwille van: ```{reason if reason != '' else 'Geen reden opgegeven'}```")
-
         embed = discord.Embed(
             title="Je bent gekicked",
             description="Je bent gekicked uit de Geneeskunde discord-groep. Indien je vragen of opmerkingen hebt, "
@@ -364,9 +359,18 @@ class VerificationModule(commands.Cog):
 
         embed.add_field(name="Reden", value=reason if reason != '' else 'Geen reden opgegeven')
 
-        await member.send(embed=embed)
+        try:
+            await member.kick(reason=reason)
+        except Exception as e:
+            await int.followup.send(
+                f"⚠ Ik kon {int.user.mention} niet kicken omwille van: ```{str(e)}```")
+        else:
+            await int.followup.send(
+                f"{member.mention} is gekicked door {int.user.mention} omwille van: ```{reason if reason != '' else 'Geen reden opgegeven'}```")
+            await member.send(embed=embed)
+            await VerificationModule.logger.on_user_kick(int.user, member, unverify)
 
-        await member.kick(reason=reason)
+
 
     @commands.Cog.listener('on_member_join')
     async def on_verified_member_join(self, member: discord.Member):
