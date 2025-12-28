@@ -363,7 +363,7 @@ class VerificationModule(commands.Cog):
             await member.kick(reason=reason)
         except Exception as e:
             await int.followup.send(
-                f"⚠ Ik kon {int.user.mention} niet kicken omwille van: ```{str(e)}```")
+                f"⚠️Ik kon {int.user.mention} niet kicken omwille van: ```{str(e)}```")
         else:
             await int.followup.send(
                 f"{member.mention} is gekicked door {int.user.mention} omwille van: ```{reason if reason != '' else 'Geen reden opgegeven'}```")
