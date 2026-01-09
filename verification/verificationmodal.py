@@ -81,8 +81,9 @@ class CollectNameModal(ui.Modal, title="Geef je studentenmail"):
                 view=view, ephemeral=True)
         else:
             embed = discord.Embed(
-                title="Geen student geneeskunde",
-                description="Je bent geen geneeskunde student aan de KU Leuven. Indien je denkt dat dit een vergissing is, neem dan contact op met een van de bestuursleden.",
+                title="Ongeldig e-mailadres",
+                description="Je e-mail kon niet gevonden worden in ons studentenbestand. Dit komt waarschijnlijk doordat:\n\n1. je een **ongeldig e-mailadres** hebt gebruikt;\n2. je **geen geneeskundestudent** bent aan de KU Leuven.\n\nDenk je dat dit een **vergissing** is? Neem dan gerust contact op met een van de bestuursleden.",
+                #description="Je bent geen geneeskunde student aan de KU Leuven. Indien je denkt dat dit een vergissing is, neem dan contact op met een van de bestuursleden.",
                 color=discord.Color.red()
             )
 
