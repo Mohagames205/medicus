@@ -345,6 +345,25 @@ class VerificationModule(commands.Cog):
 
         await int.response.defer()
 
+        guild = int.guild
+        bot = guild.me
+
+        if not bot.guild_permissions.kick_members:
+            await int.followup.send("⚠️ Ik heb geen permissie om leden te kicken.")
+            return
+
+        if member == guild.owner:
+            await int.followup.send("⚠️ Ik kan de server owner niet kicken.")
+            return
+
+        if member.top_role >= bot.top_role:
+            await int.followup.send("⚠️ Mijn rol staat te laag om dit lid te kicken.")
+            return
+
+        if member.top_role >= int.user.top_role:
+            await int.followup.send("⚠️ Jouw rol staat te laag om dit lid te kicken.")
+            return
+
         student = await verificationuser.Student.from_discord_uid(member.id)
 
         if unverify and student:
@@ -352,25 +371,36 @@ class VerificationModule(commands.Cog):
 
         embed = discord.Embed(
             title="Je bent gekicked",
-            description="Je bent gekicked uit de Geneeskunde discord-groep. Indien je vragen of opmerkingen hebt, "
+            description="Je bent uit de Geneeskunde-Discordgroep gekicked. Indien je vragen of opmerkingen hebt, "
                         "contacteer je het best <@326311622194888704>.",
             color=discord.Color.red()
         )
 
-        embed.add_field(name="Reden", value=reason if reason != '' else 'Geen reden opgegeven')
+        embed.add_field(
+            name="Reden",
+            value=reason if reason != "" else "Geen reden opgegeven"
+        )
+
+        try:
+            user = await self.bot.fetch_user(member.id)
+            await user.send(embed=embed)
+        except Exception as e:
+            print(str(e))
 
         try:
             await member.kick(reason=reason)
         except Exception as e:
             await int.followup.send(
-                f"⚠️Ik kon {int.user.mention} niet kicken omwille van: ```{str(e)}```")
-        else:
-            await int.followup.send(
-                f"{member.mention} is gekicked door {int.user.mention} omwille van: ```{reason if reason != '' else 'Geen reden opgegeven'}```")
-            await member.send(embed=embed)
-            await VerificationModule.logger.on_user_kick(int.user, member, unverify)
+                f"⚠️ Ik kon {member.mention} niet kicken omwille van:\n```{str(e)}```"
+            )
+            return
 
+        await int.followup.send(
+            f"{member.mention} is gekicked door {int.user.mention} omwille van: "
+            f"```{reason if reason != '' else 'Geen reden opgegeven'}```"
+        )
 
+        await VerificationModule.logger.on_user_kick(int.user, member, unverify)
 
     @commands.Cog.listener('on_member_join')
     async def on_verified_member_join(self, member: discord.Member):
