@@ -47,14 +47,14 @@ class ScheduleModule(commands.Cog):
         await session.close()
         return content.decode('utf-8')
 
-    @app_commands.command(name="provideics")
+    @app_commands.command(name="provideics", description="ICS bestand linken aan een fase")
     @commands.has_permissions(administrator=True)
     async def provide_ics(self, int: discord.Interaction, link: str, phase: int):
         await int.response.defer()
         await self.register_calendar(link, phase)
         await int.followup.send("ICS has been registered succesfully", ephemeral=True)
 
-    @app_commands.command(name="setschedulechannel")
+    @app_commands.command(name="setschedulechannel", description="Kalenderkanaal instellen in huidig tekstkanaal.")
     async def set_schedule_channel(self, int: discord.Interaction, phase: int):
         embed = discord.Embed(
             title="Huidig hoorcollege",

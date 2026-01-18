@@ -81,7 +81,7 @@ class VerificationModule(commands.Cog):
                 await self.unregister_verification_channel(message["message_id"])
                 continue
 
-    @app_commands.command(name="setverificationchannel")
+    @app_commands.command(name="setverificationchannel", description="Stelt het kanaal in waar gebruikers zich kunnen verifiëren.")
     async def set_verification_channel(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
@@ -134,7 +134,7 @@ class VerificationModule(commands.Cog):
         except Exception as e:
             print(f"Mailgun error: {e}")
 
-    @app_commands.command()
+    @app_commands.command(name="verify", description="Handmatige verificatie van een gebruiker.")
     async def force_verify_user(self, int: discord.Interaction, member: discord.Member, email: str, voornaam: str = "",
                                 achternaam: str = ""):
         await int.response.defer()
@@ -153,7 +153,7 @@ class VerificationModule(commands.Cog):
             await member.send(embed=embed)
             await int.followup.send(f"{member.mention} is succesvol geverifieerd!")
 
-    @app_commands.command()
+    @app_commands.command(description="Gebruiker deverifiëren via e-mailadres")
     async def unverify_email(self, interaction: discord.Interaction, email: str):
         await interaction.response.defer()
 
@@ -180,7 +180,7 @@ class VerificationModule(commands.Cog):
 
         await interaction.followup.send(f'De gebruiker met email {email} is succes gedeverifieerd.')
 
-    @app_commands.command()
+    @app_commands.command(name="unverify", description="Verificatie van Discordgebruiker intrekken.")
     async def force_unverify_user(self, interaction: discord.Interaction, member: discord.Member):
         await interaction.response.defer()
 
@@ -224,7 +224,7 @@ class VerificationModule(commands.Cog):
                 return ps
         return None
 
-    @discord.app_commands.command()
+    @app_commands.command(name="alumni", description="Checken wie niet meer in memberships.json staat.")
     async def alumni(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
@@ -288,7 +288,7 @@ class VerificationModule(commands.Cog):
 
         return result[0] > 0
 
-    @app_commands.command()
+    @app_commands.command(description="Geeft gebruikersinfo via Discordnaam")
     async def whois(self, interaction: discord.Interaction, member: discord.Member):
         await interaction.response.defer()
 
@@ -313,7 +313,7 @@ class VerificationModule(commands.Cog):
 
         await interaction.followup.send("Deze persoon is waarschijnlijk niet geverifieerd.")
 
-    @app_commands.command()
+    @app_commands.command(description="Zoekt Discordgebruiker op op basis van e-mail")
     async def lookup(self, interaction: discord.Interaction, email: str):
         await interaction.response.defer()
 
@@ -340,7 +340,7 @@ class VerificationModule(commands.Cog):
         await interaction.followup.send(embed=embed)
         return
 
-    @app_commands.command()
+    @app_commands.command(description="Verwijderd lid van Discordserver")
     async def kick(self, int: discord.Interaction, member: discord.Member, reason: str = "", unverify: bool = False):
 
         await int.response.defer()
@@ -422,7 +422,7 @@ class VerificationModule(commands.Cog):
 
         return subscribed_roles
 
-    @app_commands.command()
+    @app_commands.command(description="Synchroniseert vakrollen met NV rollen. Enkel toe te passen indien bot langdurig offline.")
     async def sync_roles(self, interaction: discord.Interaction):
         await interaction.response.defer()
 
