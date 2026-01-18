@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 import aiohttp
 import aiosqlite
@@ -10,7 +11,12 @@ from discord import app_commands
 from discord.ext import tasks, commands
 from ics import Calendar, Event
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 brussels_timezone = pytz.timezone('Europe/Brussels')
+
 
 
 class CourseEvent:
@@ -140,7 +146,7 @@ class ScheduleModule(commands.Cog):
         except discord.errors.DiscordServerError as e:
             logging.error(e)
 
-    @tasks.loop(seconds=90)
+    @tasks.loop(seconds=int(os.getenv("ICS_REFRESH", 90)))
     async def check_ical(self):
         for guild in self.bot.guilds:
 
@@ -161,7 +167,7 @@ class ScheduleModule(commands.Cog):
             await self.unregister_message(payload.message_id)
 
     async def register_calendar(self, link: str, phase: int):
-        await self.cur.execute('INSERT INTO calendars (`link`, `phase`) values (?, ?)',
+        await self.cur.execute('INSERT INTO calendars (`link`, `phase`) values (?, ?) ON CONFLICT(`phase`) DO UPDATE SET `link` = excluded.link',
                                (link, phase))
         await self.con.commit()
 
