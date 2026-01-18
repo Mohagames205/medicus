@@ -24,7 +24,9 @@ logging.basicConfig(level=logging.INFO)
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix='$', intents=intents)
+
 tree = client.tree
+
 
 embed_messages = {}
 
@@ -37,8 +39,9 @@ async def on_ready():
     await client.add_cog(ScheduleModule(client, con))
     await client.add_cog(misc.MiscModule(client))
 
+    await tree.sync()
+
     for guild in client.guilds:
-        tree.copy_global_to(guild=discord.Object(id=guild.id))
         await tree.sync(guild=discord.Object(id=guild.id))
 
     game = discord.Game("mootje.be")
@@ -48,6 +51,9 @@ async def on_ready():
 
     logging.info("BOT IS READY")
 
+@tree.command(name="ping", description="Check bot latency")
+async def ping(interaction: discord.Interaction):
+    await interaction.response.send_message("Pong!")
 
 async def initialise_db():
     con = await aiosqlite.connect("bot.db")
