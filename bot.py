@@ -42,7 +42,7 @@ async def on_ready():
     await tree.sync()
 
     for guild in client.guilds:
-        tree.copy_global_to(guild=discord.Object(id=guild.id))
+        #tree.copy_global_to(guild=discord.Object(id=guild.id))
         await tree.sync(guild=discord.Object(id=guild.id))
 
     game = discord.Game("mootje.be")
