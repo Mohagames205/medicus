@@ -7,9 +7,10 @@ import random
 import re
 import time
 import aiosqlite
+import arrow
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 from mailgun.client import Client
 from typing import Optional
 
@@ -52,6 +53,10 @@ class VerificationModule(commands.Cog):
         self.cur = await self.con.cursor()
 
         await VerificationModule.logger.enable()
+        self.check_codes.start()
+
+    async def cog_unload(self) -> None:
+        self.check_codes.cancel()
 
     def fetch_replaceable_roles(self):
         with open("assets/role_verification.json") as file:
@@ -524,3 +529,11 @@ class VerificationModule(commands.Cog):
         channel = await member.guild.fetch_channel(int(os.getenv("WELCOME_CHANNEL")))
         if channel is not None:
             await channel.send(f'Welkom {member.mention}!! 🎊.')
+
+    @tasks.loop(seconds=60)
+    async def check_codes(self):
+        await self.cur.execute("DELETE FROM `verification_codes` WHERE `generated_at` <= datetime('now', '-60 minutes')")
+        deleted = self.cur.rowcount
+        await self.con.commit()
+        if deleted > 0:
+            logging.info(f"[{arrow.now()}] Deleting {str(deleted)} expired verification codes")

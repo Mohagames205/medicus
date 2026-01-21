@@ -69,7 +69,7 @@ async def initialise_db():
         'CREATE TABLE IF NOT EXISTS calendars (id INTEGER PRIMARY KEY, link TEXT, phase INTEGER UNIQUE);')
 
     await cur.execute(
-        'CREATE TABLE IF NOT EXISTS verification_codes (id INTEGER PRIMARY KEY, code INTEGER, email VARCHAR(255) UNIQUE)'
+        'CREATE TABLE IF NOT EXISTS verification_codes (id INTEGER PRIMARY KEY, code INTEGER, email VARCHAR(255) UNIQUE, generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)'
     )
 
     await cur.execute(
