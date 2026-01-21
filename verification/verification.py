@@ -533,7 +533,7 @@ class VerificationModule(commands.Cog):
     @tasks.loop(seconds=60)
     async def check_codes(self):
         try:
-            await self.cur.execute("DELETE FROM `verification_codes` WHERE `generated_at` <= datetime('now', '-60 minutes')")
+            await self.cur.execute("DELETE FROM `verification_codes` WHERE `generated_at` <= datetime('now', '-30 minutes')")
             deleted = self.cur.rowcount
             await self.con.commit()
         except Exception:
