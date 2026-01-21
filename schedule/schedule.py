@@ -43,6 +43,9 @@ class ScheduleModule(commands.Cog):
         self.cur = await self.con.cursor()
         self.check_ical.start()
 
+    async def cog_unload(self) -> None:
+        self.check_ical.cancel()
+
     async def get_file_content(self, url):
         # thx https://github.com/Azure/azure-sdk-for-python/issues/13242#issuecomment-1239061801
         session = aiohttp.ClientSession()
