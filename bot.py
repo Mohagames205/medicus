@@ -57,6 +57,14 @@ async def ping(interaction: discord.Interaction):
     await interaction.response.send_message("Pong!")
 
 async def initialise_db():
+    """
+    Open (or create) the SQLite database file "bot.db" and ensure required tables exist.
+    
+    Creates the database file if missing, sets the connection's row_factory to sqlite3.Row, initializes a cursor via the module's ConnectionManager, and ensures the following tables exist: subscribed_messages, calendars, verification_codes (includes a generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP), verified_users, and synced_verification_messages.
+    
+    Returns:
+        con (aiosqlite.Connection): An open aiosqlite connection with row_factory set to sqlite3.Row and an initialized cursor.
+    """
     con = await aiosqlite.connect("bot.db")
     con.row_factory = sqlite3.Row  # https://stackoverflow.com/questions/3300464/how-can-i-get-dict-from-sqlite-query
     cur = await con.cursor()
@@ -88,4 +96,3 @@ async def initialise_db():
 
 
 client.run(os.getenv("TOKEN"))
-

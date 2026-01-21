@@ -50,15 +50,31 @@ class VerificationModule(commands.Cog):
         VerificationModule.logger = VerificationLogger(channel)
 
     async def cog_load(self) -> None:
+        """
+        Initialize the cog's runtime resources when it is loaded.
+        
+        Sets up the database cursor, enables the VerificationModule logger, and starts the periodic verification code cleanup task (`check_codes`).
+        """
         self.cur = await self.con.cursor()
 
         await VerificationModule.logger.enable()
         self.check_codes.start()
 
     async def cog_unload(self) -> None:
+        """
+        Cancel the periodic verification-code cleanup task for this cog.
+        
+        Stops the background loop that removes expired verification codes and ensures it is not running after the cog is unloaded.
+        """
         self.check_codes.cancel()
 
     def fetch_replaceable_roles(self):
+        """
+        Load the replaceable role definitions from assets/role_verification.json.
+        
+        Returns:
+            list: The array found under the file's "roles" key, representing role mappings used for verification.
+        """
         with open("assets/role_verification.json") as file:
             roles = json.load(file)
             return roles["roles"]
@@ -526,12 +542,23 @@ class VerificationModule(commands.Cog):
 
     @commands.Cog.listener('verified_join')
     async def on_verified_join(self, member: discord.Member):
+        """
+        Send a welcome message to the configured welcome channel when a member is verified.
+        
+        Parameters:
+            member (discord.Member): The verified guild member to welcome.
+        """
         channel = await member.guild.fetch_channel(int(os.getenv("WELCOME_CHANNEL")))
         if channel is not None:
             await channel.send(f'Welkom {member.mention}!! 🎊.')
 
     @tasks.loop(seconds=60)
     async def check_codes(self):
+        """
+        Remove verification codes older than 60 minutes from the database and commit the change.
+        
+        If any codes are deleted, log the number deleted with a timestamp.
+        """
         await self.cur.execute("DELETE FROM `verification_codes` WHERE `generated_at` <= datetime('now', '-60 minutes')")
         deleted = self.cur.rowcount
         await self.con.commit()
