@@ -30,13 +30,14 @@ tree = client.tree
 
 embed_messages = {}
 
+@client.event
+async def setup_hook():
+    client.con = await initialise_db()
 
 @client.event
 async def on_ready():
-    con = await initialise_db()
-
-    await client.add_cog(VerificationModule(client, con))
-    await client.add_cog(ScheduleModule(client, con))
+    await client.add_cog(VerificationModule(client, client.con))
+    await client.add_cog(ScheduleModule(client, client.con))
     await client.add_cog(misc.MiscModule(client))
 
     await tree.sync()
@@ -80,6 +81,18 @@ async def initialise_db():
         'CREATE TABLE IF NOT EXISTS synced_verification_messages (id INTEGER PRIMARY KEY, guild_id INTEGER, channel_id '
         'INTEGER, message_id INTEGER)'
     )
+
+    try:
+        await cur.execute(
+            'ALTER TABLE verification_codes ADD COLUMN generated_at TIMESTAMP')
+
+        await cur.execute(
+            "UPDATE verification_codes SET generated_at = datetime('now') WHERE generated_at IS NULL;")
+    except Exception as e:
+        print(e)
+
+
+    await con.commit()
 
     cm = db.connection_manager.ConnectionManager(con)
     await cm.initialize_cursor()

@@ -1,5 +1,5 @@
 import asyncio
-import datetime
+import arrow
 import json
 import logging
 import os
@@ -9,9 +9,11 @@ import time
 import aiosqlite
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 from mailgun.client import Client
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 import db.connection_manager
@@ -52,6 +54,10 @@ class VerificationModule(commands.Cog):
         self.cur = await self.con.cursor()
 
         await VerificationModule.logger.enable()
+        self.check_codes.start()
+
+    async def cog_unload(self) -> None:
+        self.check_codes.cancel()
 
     def fetch_replaceable_roles(self):
         with open("assets/role_verification.json") as file:
@@ -77,7 +83,7 @@ class VerificationModule(commands.Cog):
 
                 await message.edit(view=VerificationView(self))
             except discord.errors.NotFound:
-                print(f"Unregistering non existent message with ID: {message['message_id']}")
+                logger.warning(f"Unregistering non existent message with ID: {message['message_id']}")
                 await self.unregister_verification_channel(message["message_id"])
                 continue
 
@@ -385,8 +391,7 @@ class VerificationModule(commands.Cog):
             user = await self.bot.fetch_user(member.id)
             await user.send(embed=embed)
         except Exception as e:
-            print(str(e))
-
+            logger.exception(f"Failed to send message to user {member.id}")
         try:
             await member.kick(reason=reason)
         except Exception as e:
@@ -524,3 +529,21 @@ class VerificationModule(commands.Cog):
         channel = await member.guild.fetch_channel(int(os.getenv("WELCOME_CHANNEL")))
         if channel is not None:
             await channel.send(f'Welkom {member.mention}!! 🎊.')
+
+    @tasks.loop(seconds=60)
+    async def check_codes(self):
+        try:
+            await self.cur.execute("DELETE FROM `verification_codes` WHERE `generated_at` <= datetime('now', '-60 minutes')")
+            deleted = self.cur.rowcount
+            await self.con.commit()
+        except Exception:
+            await self.con.rollback()
+            logger.exception("Failed to purge expired verification codes")
+            return
+        if deleted > 0:
+            logger.info(f"[{arrow.now()}] Deleting {deleted} expired verification codes")
+
+    @check_codes.before_loop
+    async def before_check_codes(self):
+        logger.info("Waiting until bot is ready")
+        await self.bot.wait_until_ready()
