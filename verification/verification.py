@@ -83,7 +83,7 @@ class VerificationModule(commands.Cog):
 
                 await message.edit(view=VerificationView(self))
             except discord.errors.NotFound:
-                print(f"Unregistering non existent message with ID: {message['message_id']}")
+                logger.warning(f"Unregistering non existent message with ID: {message['message_id']}")
                 await self.unregister_verification_channel(message["message_id"])
                 continue
 
@@ -391,8 +391,7 @@ class VerificationModule(commands.Cog):
             user = await self.bot.fetch_user(member.id)
             await user.send(embed=embed)
         except Exception as e:
-            print(str(e))
-
+            logger.exception(f"Failed to send message to user {member.id}")
         try:
             await member.kick(reason=reason)
         except Exception as e:
@@ -533,13 +532,18 @@ class VerificationModule(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def check_codes(self):
-        await self.cur.execute("DELETE FROM `verification_codes` WHERE `generated_at` <= datetime('now', '-60 minutes')")
-        deleted = self.cur.rowcount
-        await self.con.commit()
+        try:
+            await self.cur.execute("DELETE FROM `verification_codes` WHERE `generated_at` <= datetime('now', '-60 minutes')")
+            deleted = self.cur.rowcount
+            await self.con.commit()
+        except Exception:
+            await self.con.rollback()
+            logger.exception("Failed to purge expired verification codes")
+            return
         if deleted > 0:
             logger.info(f"[{arrow.now()}] Deleting {deleted} expired verification codes")
 
     @check_codes.before_loop
     async def before_check_codes(self):
-        print("waiting")
+        logger.info("Waiting until bot is ready")
         await self.bot.wait_until_ready()
