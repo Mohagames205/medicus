@@ -1,5 +1,5 @@
 import asyncio
-import datetime
+import arrow
 import json
 import logging
 import os
@@ -7,12 +7,13 @@ import random
 import re
 import time
 import aiosqlite
-import arrow
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from mailgun.client import Client
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 import db.connection_manager
@@ -536,4 +537,9 @@ class VerificationModule(commands.Cog):
         deleted = self.cur.rowcount
         await self.con.commit()
         if deleted > 0:
-            logging.info(f"[{arrow.now()}] Deleting {str(deleted)} expired verification codes")
+            logger.info(f"[{arrow.now()}] Deleting {deleted} expired verification codes")
+
+    @check_codes.before_loop
+    async def before_check_codes(self):
+        print("waiting")
+        await self.bot.wait_until_ready()
