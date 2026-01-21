@@ -34,8 +34,9 @@ class PartialStudent:
         email = self.email
 
         code = random.randint(10000, 99999)
-        await cursor.execute('INSERT OR REPLACE into verification_codes (`code`, `email`) values (?, ?)',
-                             (code, email))
+        await cursor.execute(
+            "INSERT OR REPLACE INTO verification_codes (code, email, generated_at) VALUES (?, ?, datetime('now'))",
+            (code, email))
         await conn.commit()
 
         await verification.verification.VerificationModule.logger.on_code_creation(code, user, self)
