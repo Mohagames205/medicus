@@ -346,7 +346,7 @@ class VerificationModule(commands.Cog):
         await interaction.followup.send(embed=embed)
         return
 
-    @app_commands.command(description="Verwijderd lid van Discordserver")
+    @app_commands.command(description="Verwijdert lid van Discordserver")
     async def kick(self, int: discord.Interaction, member: discord.Member, reason: str = "", unverify: bool = False):
 
         await int.response.defer()
