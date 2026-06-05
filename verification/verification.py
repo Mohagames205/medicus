@@ -347,7 +347,7 @@ class VerificationModule(commands.Cog):
         return
 
     @app_commands.command(description="Verwijdert lid van Discordserver")
-    async def kick(self, int: discord.Interaction, member: discord.Member, reason: str = "", unverify: bool = False):
+    async def kick(self, int: discord.Interaction, member: discord.Member, reason: str = "Geen reden opgegeven", unverify: bool = False):
 
         await int.response.defer()
 
@@ -405,7 +405,7 @@ class VerificationModule(commands.Cog):
             f"```{reason if reason != '' else 'Geen reden opgegeven'}```"
         )
 
-        await VerificationModule.logger.on_user_kick(int.user, member, unverify)
+        await VerificationModule.logger.on_user_kick(int.user, member, unverify, reason)
 
     @commands.Cog.listener('on_member_join')
     async def on_verified_member_join(self, member: discord.Member):

@@ -115,14 +115,15 @@ class VerificationLogger:
                                          f"geverifieerd.",
                                      fields=fields)
 
-    async def on_user_kick(self, cause: discord.Member, victim: discord.Member, unverified: bool):
+    async def on_user_kick(self, cause: discord.Member, victim: discord.Member, unverified: bool, reason: str):
 
         v_student = await verificationuser.Student.from_discord_uid(victim.id)
 
         fields = [
             VerificationField("Gekicked door", f"{cause.mention}({cause.name})"),
             VerificationField("Slachtoffer", f"{victim.mention}({victim.name})"),
-            VerificationField("Gedeverifieerd?", "Ja" if unverified else "Neen")
+            VerificationField("Gedeverifieerd?", "Ja" if unverified else "Neen"),
+            VerificationField("Reden", f"{reason}")
         ]
 
         if v_student:
